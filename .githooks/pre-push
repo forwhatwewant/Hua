@@ -1,0 +1,62 @@
+#!/bin/sh
+# pre-push：推之前强制过一遍 check-leaks。
+#
+# 为什么要有这个：2026-10-21 / 10-22 / 10-24 三次把私人路径推上公开仓库，
+# 前两次靠「我记得要检查」，第三次还是漏了 —— 记性不可靠，钩子可靠。
+#
+# 两件事都查：
+#   1) 工作区（现在长什么样）
+#   2) 这次要推的提交（历史里有没有残留）—— 泄漏可能提交过又被删掉，
+#      工作区看着干净，推上去历史里还在。
+#
+# 装在 .githooks/ 里，靠 `git config core.hooksPath .githooks` 生效
+# （仓库级配置，clone 之后跑一次 `npm run hooks:install`）。
+
+ROOT=$(git rev-parse --show-toplevel)
+
+if ! command -v node >/dev/null 2>&1; then
+  echo ""
+  echo "  ✗ 找不到 node，无法运行泄漏检查 —— 为安全起见拦下这次推送。"
+  echo ""
+  exit 1
+fi
+
+# ---- 1) 工作区 ----
+if ! node "$ROOT/scripts/check-leaks.cjs"; then
+  echo ""
+  echo "  ✗ 推送被拦下了：工作区里有不该提交的内容。"
+  echo ""
+  echo "  修完再推。确实要绕过（不建议）：git push --no-verify"
+  echo ""
+  exit 1
+fi
+
+# ---- 2) 这次要推的提交（还没在任何远端分支上的） ----
+PUSHED=""
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$local_sha" in
+    0000000000000000000000000000000000000000) continue ;;   # 删除分支，没东西要推
+  esac
+  NEW=$(git rev-list "$local_sha" --not --remotes 2>/dev/null)
+  for c in $NEW; do
+    case " $PUSHED " in
+      *" $c "*) ;;
+      *) PUSHED="$PUSHED $c" ;;
+    esac
+  done
+done
+
+if [ -n "$(echo $PUSHED)" ]; then
+  # shellcheck disable=SC2086
+  if ! node "$ROOT/scripts/check-leaks.cjs" --commits $PUSHED; then
+    echo ""
+    echo "  ✗ 推送被拦下了：要推的提交里有不该提交的内容。"
+    echo ""
+    echo "  得改写历史（压成干净提交再推），光删文件不够 ——"
+    echo "  旧提交里的内容推上去以后，按 SHA 还能打开。"
+    echo ""
+    exit 1
+  fi
+fi
+
+exit 0

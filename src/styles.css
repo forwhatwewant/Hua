@@ -1,0 +1,1817 @@
+/* 「花」—— 四套主题：暖纸 / 素白 / 青墨 / 夜读 */
+
+:root,
+[data-theme='paper'] {
+  --bg: #f7f4ee;
+  --surface: #fffdf8;
+  --surface-2: #f1ece2;
+  --text: #2b2721;
+  --text-2: #6b6355;
+  --text-3: #a39a8a;
+  --line: #e5ded0;
+  --line-2: #efe9dd;
+  --accent: #9a5b0a;
+  --accent-soft: #f6ecdc;
+  --accent-on: #ffffff;
+  --ok: #3f7d4e;
+  --warn: #a1651f;
+  --danger: #a33a2f;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --font: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-title: 'Georgia', 'Songti SC', 'Source Han Serif SC', serif;
+}
+
+[data-theme='plain'] {
+  --bg: #fbfbfc;
+  --surface: #ffffff;
+  --surface-2: #f4f4f6;
+  --text: #17181c;
+  --text-2: #61646d;
+  --text-3: #9b9ea7;
+  --line: #e6e7ea;
+  --line-2: #f0f1f3;
+  --accent: #4f46e5;
+  --accent-soft: #eef0fe;
+  --accent-on: #ffffff;
+  --ok: #15803d;
+  --warn: #b45309;
+  --danger: #b91c1c;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --font: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-title: var(--font);
+}
+
+[data-theme='teal'] {
+  --bg: #f4f8f7;
+  --surface: #ffffff;
+  --surface-2: #eaf2f0;
+  --text: #14211e;
+  --text-2: #55635f;
+  --text-3: #93a19d;
+  --line: #dde8e5;
+  --line-2: #eaf2f0;
+  --accent: #0f766e;
+  --accent-soft: #e3f2ef;
+  --accent-on: #ffffff;
+  --ok: #0f766e;
+  --warn: #b45309;
+  --danger: #b91c1c;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --font: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-title: var(--font);
+}
+
+[data-theme='dark'] {
+  --bg: #15171b;
+  --surface: #1d2025;
+  --surface-2: #24282e;
+  --text: #e8eaed;
+  --text-2: #9aa0a8;
+  --text-3: #6a7079;
+  --line: #2c3138;
+  --line-2: #24282e;
+  --accent: #5dcaa5;
+  --accent-soft: #1e332c;
+  --accent-on: #0f1a16;
+  --ok: #5dcaa5;
+  --warn: #e0a75a;
+  --danger: #e2766b;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --font: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-title: var(--font);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+button { font-family: inherit; font-size: inherit; color: inherit; cursor: pointer; }
+input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+
+/* ---------- 外壳 ---------- */
+
+.app { display: grid; grid-template-columns: 168px 1fr; height: 100%; }
+
+.rail {
+  background: var(--surface-2);
+  border-right: 1px solid var(--line);
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand {
+  font-family: var(--font-title);
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  padding: 2px 10px 16px;
+  color: var(--text);
+}
+.brand small { display: block; font-size: 11px; letter-spacing: 0.14em; color: var(--text-3); font-weight: 400; margin-top: 2px; }
+
+.navbtn {
+  display: flex; align-items: center; gap: 9px;
+  border: none; background: none; text-align: left;
+  padding: 8px 10px; border-radius: var(--radius);
+  color: var(--text-2); font-size: 13.5px;
+}
+.navbtn:hover { color: var(--text); }
+/* 当前页签：不填色块，改用和「固定」同一条左侧竖线 —— 全应用只留一种强调语言 */
+.navbtn.on {
+  color: var(--accent); font-weight: 500;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.navbtn .dotmark { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: 0.5; }
+.navbtn.on .dotmark { opacity: 1; }
+
+.rail-foot { margin-top: auto; font-size: 11px; color: var(--text-3); padding: 8px 10px; line-height: 1.5; }
+
+/* 日界提示条：贴在正文区顶部，只在凌晨跨日窗口出现。
+   cross（还没翻页）用主色，fresh（刚翻页）用低调的绿。 */
+.daybanner {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px; font-size: 12.5px; flex: none;
+  border-bottom: 1px solid var(--line);
+}
+.daybanner.cross { background: var(--accent-soft); color: var(--accent); }
+.daybanner.fresh { background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); }
+.daybanner .db-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex: none;
+  background: currentColor; opacity: 0.9;
+}
+.daybanner .db-text { line-height: 1.5; }
+
+/* 设置页里「现在算哪天」的一行：和时间提示条同色系，但更克制 */
+.daynow {
+  display: inline-flex; align-items: center; gap: 7px;
+  margin-top: 9px; padding: 5px 10px; border-radius: 7px;
+  font-size: 12.5px; font-variant-numeric: tabular-nums;
+}
+.daynow.cross { background: var(--accent-soft); color: var(--accent); }
+.daynow.fresh { background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); }
+.daynow .dn-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex: none;
+  background: currentColor; opacity: 0.9;
+}
+
+.main { overflow: hidden; display: flex; flex-direction: column; }
+
+.pagehead {
+  padding: 22px 30px 12px;
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  flex: none;   /* 在 .main 这个 flex column 里不能被压缩，否则标题区会被挤扁 */
+}
+.pagehead h1 {
+  font-family: var(--font-title);
+  font-size: 22px; font-weight: 500; margin: 0; letter-spacing: 0.01em;
+}
+.pagehead .sub { font-size: 12.5px; color: var(--text-3); }
+.pagehead .grow { flex: 1; }
+
+.scroll { flex: 1; overflow: auto; padding: 0 30px 40px; }
+
+/* 日志页的写作视图要「自己滚自己」，而不是让整页滚 ——
+   .scroll 默认是滚动容器，子元素height由内容决定，编辑器永远撑不到边、
+   overflow:auto 形同虚设，表现就是：写长了光标跑到框外，页面越滚越长。
+   这里把 .scroll 变回普通块（overflow:hidden），再把高度一路传下去，
+   让 .logbody 拿到确定高度，编辑器就能在框内滚、光标始终可见。
+   只对写作视图生效（滚动视图/日历视图内容不长，不需要）。 */
+.scroll.log-scroll-write {
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  padding-bottom: 24px;
+}
+
+/* 日历视图同理：右栏预览要「自己在框内滚」，而不是把整页撑长。
+   否则翻一篇很久以前的日记，正文一长就把整个页面推下去，左栏日历也够不着。 */
+.scroll.log-scroll-cal {
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  padding-bottom: 24px;
+}
+
+/* ---------- 今天：双主干 ---------- */
+
+.today { display: grid; grid-template-columns: minmax(320px, 1fr) minmax(360px, 1.1fr); gap: 26px; height: 100%; }
+
+.pane { display: flex; flex-direction: column; min-height: 0; }
+.pane-head {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12px; letter-spacing: 0.1em; color: var(--text-3);
+  text-transform: uppercase;
+  padding-bottom: 8px; border-bottom: 1px solid var(--line); margin-bottom: 12px;
+}
+.pane-head .grow { flex: 1; }
+.pane-body { flex: 1; overflow: auto; min-height: 0; }
+
+/* 遗留区块：默认收起，只留一个入口 —— 打开就是今天，不被前几天的事占满 */
+.backsect {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 6px 10px 8px; margin-bottom: 12px;
+}
+.backsect-head {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  border: none; background: none; padding: 4px 2px;
+  font-size: 12.5px; color: var(--text-2); text-align: left;
+}
+.backsect-head:hover { color: var(--text); }
+.backsect-head .grow { flex: 1; }
+.backsect-head .chev { font-size: 11.5px; color: var(--text-3); }
+/* 收起的入口要能一眼看出「有几件」，用角标而不是写在标题里，展开后不啰嗦 */
+.backsect-head .back-count {
+  min-width: 18px; padding: 0 5px; border-radius: 999px;
+  background: var(--surface-2, var(--line-2)); color: var(--text-2);
+  font-size: 11px; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums;
+}
+.back-when { font-size: 11.5px; color: var(--text-3); }
+.backsect .items { gap: 0; }
+.backsect .item { padding: 6px 8px; }
+/* 遗留：多选 + 批量 */
+.back-check {
+  width: 15px; height: 15px; margin: 0;
+  accent-color: var(--accent); cursor: pointer;
+  justify-self: center; align-self: center;
+}
+.item.back.sel { background: var(--accent-soft); border-radius: var(--radius); }
+.backfoot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.back-all {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; color: var(--text-3); cursor: pointer; margin-right: 2px;
+}
+.back-all input { width: 14px; height: 14px; margin: 0; accent-color: var(--accent); }
+.back-selnum { font-size: 12px; color: var(--text-2); }
+
+.backsect-foot { padding: 6px 2px 2px; }
+
+/* 未来区块：与遗留同构，默认收起，标题里带「明天 2 · 后天 1」这样的分布摘要 */
+.upsect { border-color: var(--line-2); }
+.up-digest { font-size: 11.5px; color: var(--text-3); white-space: nowrap; }
+.upgroup { margin-top: 4px; }
+.upgroup:first-of-type { margin-top: 2px; }
+.up-date {
+  display: flex; align-items: baseline; gap: 7px;
+  padding: 5px 2px 3px; margin-bottom: 2px;
+  border-bottom: 1px solid var(--line-2);
+}
+.up-rel { font-size: 12.5px; color: var(--accent); }
+.up-abs { font-size: 11.5px; color: var(--text-3); }
+.upsect-foot { padding: 7px 2px 2px; font-size: 11.5px; color: var(--text-3); }
+
+/* 事项 */
+.items { display: flex; flex-direction: column; gap: 2px; }
+
+.item {
+  display: grid; grid-template-columns: 22px 1fr auto;
+  align-items: start; gap: 10px;
+  padding: 11px 12px; border-radius: var(--radius);
+  border: 1px solid transparent;
+}
+.item:hover { background: var(--surface); border-color: var(--line); }
+/* 固定到今日页的事项：左侧一条主色竖条 + 标题前的「固定」标。
+   否则它和普通事项长得一模一样，一眼看不出哪条是被钉住的。 */
+.item.pinned { box-shadow: inset 3px 0 0 var(--accent); padding-left: 15px; }
+.item.pinned:hover { border-color: var(--accent); }
+.it-pin {
+  display: inline-block; vertical-align: 1px;
+  font-size: 10.5px; color: var(--accent); background: var(--accent-soft);
+  border-radius: 3px; padding: 0 4px; margin-right: 6px;
+}
+/* 完成/放弃：整行降透明度会把操作按钮一起拖灰，改成只让标题褪色 + 加删除线 */
+.item.done .it-title,
+.item.dropped .it-title {
+  color: var(--text-3); text-decoration: line-through; text-decoration-color: var(--line);
+}
+
+.check {
+  width: 17px; height: 17px; margin-top: 3px; padding: 0;
+  border-radius: 50%; border: 1.5px solid var(--line);
+  background: var(--surface); display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: transparent; line-height: 1;
+}
+.check:hover { border-color: var(--accent); }
+.item.done .check { background: var(--accent); border-color: var(--accent); color: var(--accent-on); }
+
+.it-title { font-size: 14px; word-break: break-word; }
+.it-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 3px; font-size: 11.5px; color: var(--text-3); }
+.tag { background: var(--surface-2); border-radius: 5px; padding: 1px 6px; color: var(--text-2); font-size: 11px; }
+.it-output { font-size: 12.5px; color: var(--text-2); margin-top: 3px; }
+/* 事项的说明/补充：比标题小、比标签淡，和备忘的「补充」同一套语言 */
+.it-note { font-size: 12px; color: var(--text-3); margin-top: 2px; line-height: 1.55; }
+
+/* ---------- 上午 / 下午 / 晚上：一条很轻的隔断 ---------- */
+.it-slot {
+  display: flex; align-items: center; gap: 9px;
+  margin: 15px 0 3px; padding: 0 12px;   /* 和事项行的左内边距对齐 */
+}
+.it-slot:first-child { margin-top: 2px; }
+.it-slot span {
+  /* 之前 10.5px + 极淡的线，用户说「看不出分界」—— 加粗一档，但还是一条线，不是标题 */
+  font-size: 12px; font-weight: 500; color: var(--text-2);
+  letter-spacing: 0.1em; white-space: nowrap;
+}
+.it-slot::after {
+  content: ''; flex: 1; height: 1px; background: var(--line);
+}
+/* 「未安排」那一段更淡，它只是个兜底 */
+.it-slot.none span { color: var(--text-3); font-weight: 400; }
+
+/* 周程列里的时段隔断：列很窄，只能极小 */
+.wc-slot {
+  display: flex; align-items: center; gap: 5px;
+  margin: 7px 0 3px; font-size: 10px; color: var(--text-3);
+  letter-spacing: 0.08em; white-space: nowrap;
+}
+.wc-slot::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.wc-slot.none { color: var(--text-3); opacity: 0.7; }
+
+/* 修改弹框里的时段选择 */
+.slotpick { display: flex; gap: 6px; flex-wrap: wrap; }
+.slotchip {
+  border: 1px solid var(--line); background: var(--bg); color: var(--text-2);
+  border-radius: 999px; padding: 4px 14px; font-size: 12.5px; cursor: pointer;
+}
+.slotchip:hover { border-color: var(--accent); color: var(--accent); }
+.slotchip.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.m-hint { font-size: 11px; color: var(--text-3); margin-top: 5px; }
+/* 跟在 label 后面的小提示（不换行） */
+.m-hint-inline { color: var(--text-3); font-weight: 400; }
+
+.it-actions { display: flex; gap: 2px; opacity: 0; }
+.item:hover .it-actions { opacity: 1; }
+.it-actions button {
+  border: none; background: none; color: var(--text-3);
+  padding: 2px 5px; border-radius: 5px; font-size: 12px;
+}
+.it-actions button:hover { background: var(--surface-2); color: var(--text); }
+.it-actions button.del:hover { color: var(--danger); }
+
+/* 拖拽排序 */
+.item.dragging { opacity: 0.4; }
+.item.dragover-before { box-shadow: inset 0 2px 0 var(--accent); }
+.item.dragover-after { box-shadow: inset 0 -2px 0 var(--accent); }
+
+/* 左栏布局：上方滚动列表 + 下方钉底的作曲器卡 */
+.pane-left { display: flex; flex-direction: column; padding-bottom: 12px; }
+.pane-scroll { flex: 1; overflow: auto; min-height: 0; padding-right: 2px; }
+
+/* 添加 —— 素线：一条输入下划线 + 一条下分隔线，不做卡片。
+   位置在左栏顶部（紧接 pane-head）：打开就看得见，新增的事项就在下方出现。
+   早先钉在底部，列表为空时会孤零零掉进左下角。 */
+/* 录入框 = 页面主角。设计意图：一条可以写的线 + 一行很轻的注解。
+   标题是唯一抢眼的东西；日期/耗时退成小字；「记下」写了东西才浮出来。 */
+.composer-hero-wrap { flex: none; padding: 0 30px 16px; }
+.composer.composer-hero {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 14px 20px 11px;
+  margin-bottom: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.composer.composer-hero:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* 标题：18px，压在一道细线上 —— 像在纸上写一行 */
+.composer-hero .composer-title {
+  width: 100%;
+  font-size: 18px;
+  padding: 3px 0 11px;
+  border-bottom: 1px solid var(--line-2);
+  background: none;
+}
+.composer-hero .composer-title::placeholder { font-size: 17px; color: var(--text-3); }
+.composer-hero .composer-title:focus { border-bottom-color: var(--accent); }
+
+/* 注解行：小字、淡色，不用的时候几乎看不见 */
+.composer-meta { display: flex; align-items: center; gap: 2px; padding-top: 3px; }
+.composer-meta .grow { flex: 1; }
+
+/* 「记下」默认藏起来，写了字才浮出来。
+   注意必须限定在 .composer-hero 里 —— 备忘那条「加一条」也用 .composer-btn，
+   不限定的话会把那个按钮一起藏掉（测试抓到的）。 */
+.composer-hero .composer-btn {
+  flex: none;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.15s;
+  padding: 6px 16px; font-size: 13px;
+}
+.composer-hero.has-text .composer-btn { opacity: 1; pointer-events: auto; }
+.cb-key { font-size: 11px; opacity: 0.75; margin-left: 2px; }
+
+/* 日期 / 预计耗时：做成「小字注解」而不是按钮胶囊。
+   胶囊三个排一排，视觉权重和标题一样重，看着就是个表单。 */
+.ct-wrap { position: relative; flex: none; }
+.ct-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  border: none; background: none;
+  /* 字小但**点击区不小**：上下各 7px padding，实际高度 ~31px，接近舒服的 32px */
+  padding: 7px 9px;
+  font: inherit; font-size: 13px; color: var(--text-3);
+  cursor: pointer; white-space: nowrap;
+  border-radius: 7px;
+  transition: background 0.12s, color 0.12s;
+}
+.ct-link:hover { color: var(--accent); background: var(--surface-2); }
+.ct-link.on { color: var(--accent); }
+.ct-caret { font-style: normal; font-size: 10px; opacity: 0.65; }
+.ct-dot { color: var(--line); font-size: 11px; user-select: none; }
+
+/* 弹层贴在注解下面，绝对定位 —— 不要撑开布局把「记下」挤走 */
+.ct-pop {
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 30;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 10px; min-width: max-content;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.composer {
+  flex: none;
+  padding: 2px 2px 11px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 7px;
+}
+.composer-title {
+  width: 100%; border: none; border-bottom: 1px solid var(--line);
+  background: transparent; outline: none;
+  font-size: 15.5px; padding: 3px 2px 7px; color: var(--text);
+  transition: border-color 0.15s;
+}
+.composer-title::placeholder { color: var(--text-3); }
+.composer-title:focus { border-bottom-color: var(--accent); }
+.composer-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.composer-foot .grow { flex: 1; }
+/* 记到哪一天：默认「今天」，选了未来时胶囊转主色，避免排错了还以为记在今天 */
+.composer-date {
+  border: 1px solid var(--line); background: none; color: var(--text-2);
+  border-radius: 999px; padding: 3px 11px; font-size: 12.5px; white-space: nowrap;
+}
+.composer-date:hover { border-color: var(--accent); color: var(--accent); }
+.composer-date.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.datepick { display: inline-flex; align-items: center; gap: 5px; }
+.dp-chip {
+  border: 1px solid var(--line); background: none; color: var(--text-2);
+  border-radius: 999px; padding: 7px 14px; font-size: 13px; white-space: nowrap;
+  min-width: 46px; min-height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.dp-chip:hover { border-color: var(--accent); color: var(--accent); }
+.dp-chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.dp-date {
+  border: 1px solid var(--line); background: none; color: var(--text-2);
+  border-radius: 8px; padding: 6px 10px; font-size: 13px; outline: none;
+  min-height: 32px; box-sizing: border-box;
+}
+.dp-date:focus { border-color: var(--accent); color: var(--text); }
+.composer-field { display: inline-flex; align-items: baseline; gap: 5px; }
+.composer-est {
+  width: 58px; border: 1px solid var(--line); background: none;
+  border-radius: 999px; padding: 3px 10px; outline: none;
+  font-size: 12.5px; text-align: center; color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+.composer-est::-webkit-outer-spin-button,
+.composer-est::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.composer-est:focus { border-color: var(--accent); color: var(--text); }
+.composer-unit { font-size: 11.5px; color: var(--text-3); }
+.composer-btn {
+  border: none; background: var(--accent-soft); color: var(--accent);
+  border-radius: 999px; padding: 5px 16px; font-weight: 500; font-size: 13px;
+  letter-spacing: 0.04em;
+}
+.composer-btn:hover { background: var(--accent); color: var(--accent-on); }
+
+.empty { color: var(--text-3); font-size: 13px; padding: 18px 10px; }
+
+/* ---------- 右栏：记录 ---------- */
+
+.rec-block { margin-bottom: 20px; }
+.rec-block h3 {
+  font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-3); font-weight: 500; margin: 0 0 8px;
+}
+.rec-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.rec-head h3 { margin: 0; }
+.rec-head .grow { flex: 1; }
+
+/* 今日页顶部的睡眠卡：把「昨晚睡了多久」放到早上一眼看得到的位置。
+   整块可点，点了去睡眠页；右侧的迷你趋势条给一个「最近几晚」的感觉。 */
+.sleeptile-wrap { margin-bottom: 16px; }
+.sleep-tile {
+  display: flex; flex-direction: column; gap: 5px;
+  width: 100%; text-align: left;
+  border: 1px solid var(--line); background: var(--surface);
+  border-radius: 9px; padding: 10px 12px;
+  cursor: pointer;
+}
+.sleep-tile:hover { border-color: var(--accent); background: var(--surface-2); }
+.st-main { display: flex; align-items: center; gap: 8px; }
+.st-dur { font-size: 19px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+.st-times { font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.st-when { color: var(--text-3); opacity: 0.85; }
+/* 迷你趋势：七根小柱子，最后一条高亮。柱子靠底对齐，看不出数值也知道大概趋势。 */
+.st-trend {
+  display: flex; align-items: flex-end; gap: 3px; height: 22px; margin-top: 2px;
+}
+.st-bar {
+  width: 6px; border-radius: 2px 2px 0 0; flex: none;
+  background: color-mix(in srgb, var(--text-3) 45%, transparent);
+}
+.st-bar.now { background: var(--accent); }
+
+/* 心得：一天多条，每条可折叠 */
+.refentry {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); margin-bottom: 8px; overflow: hidden;
+}
+.refentry-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px;
+}
+.refentry.open .refentry-head { border-bottom: 1px solid var(--line-2); }
+.refentry-head .grow { flex: 1; }
+.refold {
+  border: none; background: none; padding: 0 2px; width: 16px;
+  color: var(--text-3); font-size: 11px; line-height: 1;
+}
+.refold:hover { color: var(--accent); }
+.reftime {
+  font-size: 12px; color: var(--accent); font-weight: 500;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.refpreview {
+  flex: 1; min-width: 0; font-size: 13px; color: var(--text-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.refentry.open .refpreview { display: none; }   /* 展开时预览多余，标题栏只留时间 */
+.refnote { font-size: 11px; color: var(--text-3); white-space: nowrap; }
+.refdel {
+  border: none; background: none; color: var(--text-3);
+  font-size: 12px; padding: 2px 5px; border-radius: 5px; white-space: nowrap;
+}
+.refdel:hover { background: var(--surface-2); color: var(--danger); }
+.refentry-body { padding: 8px; }
+.refentry .reftitle-input {
+  width: 100%; box-sizing: border-box; margin-bottom: 6px;
+  font-size: 13.5px; font-weight: 500; color: var(--text);
+  border: 1px solid var(--line); border-radius: 6px;
+  background: var(--surface); padding: 5px 8px;
+}
+.refentry .reftitle-input:focus { outline: none; border-color: var(--accent); }
+.refentry-body .editor-wrap { min-height: 180px; }
+
+/* 固定（置顶）：标记写进周文件的 #### HH:MM ·置顶
+   素线方案 —— 一条 3px 左侧竖线，不用任何图标 */
+.refentry.pinned { box-shadow: inset 3px 0 0 var(--accent); }
+.refpin-tag {
+  font-size: 11px; line-height: 1.7; white-space: nowrap;
+  color: var(--accent); background: var(--accent-soft);
+  border-radius: 3px; padding: 0 5px; letter-spacing: 0.04em;
+}
+.refdate { font-size: 11.5px; color: var(--text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.refpinbtn {
+  border: none; background: none; color: var(--text-3);
+  font-size: 12px; padding: 2px 5px; border-radius: 5px; white-space: nowrap;
+}
+.refpinbtn:hover:not(:disabled) { background: var(--surface-2); color: var(--accent); }
+.refpinbtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.refentry.open .refpinbtn { margin-left: auto; }   /* 展开时预览隐藏，把按钮推回右边 */
+
+/* 固定区：和心得卡片共用同一条左侧竖线，折叠时不画卡片边框 */
+.pins { padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }.pins h3 { color: var(--accent); }
+.pins .refentry { border-color: transparent; background: none; box-shadow: inset 3px 0 0 var(--accent); }
+.pins .refentry.open { border-color: var(--line); background: var(--surface); }
+.pins .refentry .refentry-head { padding-left: 11px; }
+.pinrow {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 4px 0 4px 11px; margin-bottom: 2px;
+  border-left: 3px solid var(--accent);
+}
+.pinrow .check { flex: none; }
+/* 标题 + 标签/耗时两行，和左侧列表里的写法保持一致 */
+.pinrow-main { flex: 1; min-width: 0; }
+.pinrow-title { display: block; font-size: 13.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pinrow-main .it-meta { margin-top: 2px; }
+.pinrow-date { font-size: 11.5px; color: var(--text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---------- 备忘：不绑日期的常驻贴士 ---------- */
+.memo-hint { font-size: 11.5px; color: var(--text-3); }
+.memolist { display: flex; flex-direction: column; gap: 3px; margin-bottom: 9px; }
+
+/* 每条：固定花标 + 主行（文字/时间）+ 可选的补充 */
+.memorow {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 4px 0 4px 8px;
+  border-left: 2px solid var(--warn);
+}
+.memorow.editing { border-left-color: var(--accent); }
+.memo-mark { flex: none; color: var(--warn); margin-top: 4px; }
+.memo-main { flex: 1; min-width: 0; cursor: text; }
+.memo-main:hover .memo-text { color: var(--accent); }
+.memo-line { display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+.memo-text {
+  font-size: 13.5px; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* 补充：字更小、颜色更淡 —— 是注解，不是第二条内容 */
+.memo-note {
+  font-size: 11.5px; color: var(--text-3); line-height: 1.55;
+  margin-top: 1px; word-break: break-word;
+}
+.memo-note-input {
+  width: 100%; box-sizing: border-box; margin-top: 4px;
+  border: none; border-bottom: 1px dashed var(--line); background: none;
+  color: var(--text-2); font-size: 11.5px; padding: 2px 0 3px;
+}
+.memo-note-input:focus { outline: none; border-bottom-color: var(--accent); color: var(--text); }
+.memo-note-input::placeholder { color: var(--text-3); }
+
+/* 有时间的备忘把时刻推到右边，一串时刻对齐好扫 */
+.memo-time {
+  font-size: 11.5px; color: var(--text-3); flex: none;
+  font-variant-numeric: tabular-nums;
+}
+.memo-time-input {
+  width: 92px; flex: none;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--surface);
+  color: var(--text-2); font-size: 12px; padding: 3px 6px;
+}
+.memo-text-input {
+  flex: 1; min-width: 0;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--surface);
+  color: var(--text); font-size: 13px; padding: 4px 8px;
+}
+.memo-text-input:focus, .memo-time-input:focus { outline: none; border-color: var(--accent); }
+.memoadd { display: flex; flex-direction: column; }
+.memoadd .memo-line { gap: 6px; }
+.memo-empty { font-size: 12px; color: var(--text-3); line-height: 1.6; margin-top: 4px; }
+
+/* 可点的空状态 / 标题按钮：让「今天还没写日纪」也能直接点进去 */
+.empty.clickable { cursor: pointer; border-radius: 7px; }
+.empty.clickable:hover { background: var(--surface-2); color: var(--accent); }
+.rec-title-btn {
+  border: 0; background: none; padding: 0; margin: 0;
+  font: inherit; cursor: pointer; text-align: left;
+  display: inline-flex; align-items: center;
+}
+.rec-title-btn:hover h3 { color: var(--accent); }
+.logteaser-btn {
+  border: 1px solid transparent; width: 100%; text-align: left;
+  cursor: pointer; font: inherit;
+}
+.logteaser-btn:hover { border-color: var(--line); color: var(--accent); }
+
+/* 完成清单：完成时刻 + 按时长成比例的细条 + 时长数字。
+   这一块真正想看的是「时间花在哪」，所以做成条形而不是纯文字列表。
+   时间列 / 时长列在整组都没有数据时整列收起（见 DoneList 的 no-time / no-min）。 */
+.donelist { display: flex; flex-direction: column; padding: 2px 0; }
+
+.dl-sum {
+  font-size: 11.5px; color: var(--accent);
+  padding: 0 0 7px; margin-bottom: 5px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.doneline {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 5px 0;
+  font-size: 13.5px;
+}
+/* 小字号的列统一 line-height，好让各行首行对齐 */
+.dl-time, .dl-meta {
+  flex: none; font-size: 11.5px; color: var(--text-3);
+  line-height: 22px; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.dl-time { width: 36px; }
+.dl-meta { width: 62px; text-align: right; }
+.doneline .dl-title { flex: 1 1 0; min-width: 0; color: var(--text); }
+.doneline .dl-out { display: block; font-size: 12.5px; color: var(--text-2); margin-top: 1px; }
+
+/* 条：浅底「轨道」+ 按时长填充，右对齐。
+   有轨道才读得出比例 —— 否则短条看着就是个点。
+   宽度和标题一起分剩余空间（曾经写死 72px，在宽卡片里就缩在最右边、
+   离标题 460px 远，像一片空白里的一条小杠），下限 72px、上限 200px。 */
+.dl-bar {
+  flex: 1 1 0; min-width: 72px; max-width: 200px;
+  height: 6px; margin-top: 7px;
+  background: var(--line-2); border-radius: 3px;
+  display: flex; justify-content: flex-start; overflow: hidden;
+}
+.dl-bar i { display: block; height: 6px; background: var(--accent); border-radius: 3px; }
+
+.donelist.no-time .dl-time { display: none; }
+.donelist.no-min .dl-bar,
+.donelist.no-min .dl-meta { display: none; }
+
+.dc-done { margin: 2px 0 12px; }
+
+/* min-height 是给「单独出现」时的兜底（如今日页的引用块）。
+   作为 flex 子项时要允许收缩到比内容小，否则 overflow 不生效、框会被内容撑开 ——
+   写作用的那份由 .logbody .editor-wrap 覆盖成 min-height:0 + flex:1。 */
+.editor-wrap {
+  border: 1px solid var(--line); border-radius: var(--radius-lg);
+  background: var(--surface); display: flex; flex-direction: column;
+  min-height: 260px;
+}
+
+/* TipTap 的 EditorContent 会把可编辑区再包一层**没有类名**的 div：
+     .editor-wrap > .editor-tools
+     .editor-wrap > div(匿名) > .tiptap.ProseMirror
+   以前只写了 `.editor-wrap > .tiptap{overflow:auto}`，选择器根本匹配不到
+   （.tiptap 不是 .editor-wrap 的直接子元素），于是长文时这个匿名 div 随内容长高、
+   溢出可视区，看起来就是「整页在滚、光标跑出框外」。
+
+   滚动的职责放在**这个匿名包装层**上，而不是 .tiptap 自己：
+   contenteditable 自己当滚动容器时，浏览器/ProseMirror 的光标自动滚动常常失灵
+   （写了新行，光标停在框外，人得手动往下拉）—— 这是这次反馈的核心。
+   让包装层滚、内容自动高，原生光标滚动就正常了。 */
+.editor-wrap > div:not(.editor-tools) {
+  flex: 1; min-height: 0;
+  overflow: auto;                 /* 滚动在这里 */
+}
+/* .tiptap 只负责排版，高度随内容（不再自己滚，也不再撑满） */
+.editor-wrap .tiptap { overflow-anchor: none; }
+.editor-tools {
+  display: flex; gap: 2px; align-items: center;
+  padding: 7px 9px; border-bottom: 1px solid var(--line-2);
+}
+.editor-tools button {
+  border: none; background: none; color: var(--text-3);
+  padding: 3px 8px; border-radius: 6px; font-size: 12.5px;
+}
+.editor-tools button:hover { background: var(--surface-2); color: var(--text); }
+.editor-tools button.on { background: var(--accent-soft); color: var(--accent); }
+.editor-tools .grow { flex: 1; }
+.editor-tools .hint { font-size: 11px; color: var(--text-3); }
+
+/* width:100% 必须有 —— 在 flex column 容器里，块级子元素会被压成内容宽度，
+   表现就是编辑区只占一半、右边一大片空白。 */
+.tiptap { padding: 14px 16px; outline: none; flex: 1; min-height: 0; width: 100%; box-sizing: border-box; }
+.tiptap p { margin: 0 0 0.7em; }
+.tiptap h1, .tiptap h2, .tiptap h3 { font-family: var(--font-title); margin: 1em 0 0.4em; line-height: 1.35; }
+.tiptap h1 { font-size: 19px; } .tiptap h2 { font-size: 17px; } .tiptap h3 { font-size: 15px; }
+.tiptap ul, .tiptap ol { padding-left: 1.4em; margin: 0 0 0.7em; }
+.tiptap code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; font-size: 0.92em; }
+.tiptap pre { background: var(--surface-2); padding: 10px 12px; border-radius: var(--radius); overflow: auto; }
+.tiptap pre code { background: none; padding: 0; }
+.tiptap blockquote { margin: 0 0 0.7em; padding-left: 12px; border-left: 2px solid var(--line); color: var(--text-2); }
+.tiptap a { color: var(--accent); text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px; }
+.itemref {
+  color: var(--accent); background: var(--accent-soft);
+  border-radius: 4px; padding: 0 4px; font-size: 0.94em;
+}
+.tiptap .is-editor-empty:first-child::before {
+  content: attr(data-placeholder); color: var(--text-3); float: left; height: 0; pointer-events: none;
+}
+.tiptap hr { border: none; border-top: 1px solid var(--line); margin: 1em 0; }
+
+/* ---------- 回顾 ---------- */
+
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+.tabs button {
+  border: 1px solid transparent; background: none; color: var(--text-2);
+  padding: 6px 14px; border-radius: 999px; font-size: 13px;
+}
+.tabs button.on { background: var(--surface); border-color: var(--line); color: var(--text); font-weight: 500; }
+
+/* 安静时不画线框，鼠标经过才浮现一条发丝线 —— 与时间轴同一套克制语言 */
+.daycard {
+  background: var(--surface); border: 1px solid transparent;
+  border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 12px;
+  transition: border-color 0.15s;
+}
+.daycard:hover { border-color: var(--line); }
+.daycard .dc-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.daycard .dc-date { font-family: var(--font-title); font-size: 15px; font-weight: 500; }
+.daycard .dc-wd { font-size: 12px; color: var(--text-3); }
+.daycard .dc-body { font-size: 13.5px; color: var(--text-2); }
+.daycard .dc-body p { margin: 0 0 0.55em; }
+.daycard .dc-body p:last-child { margin-bottom: 0; }
+.daycard .dc-body ul, .daycard .dc-body ol { margin: 0 0 0.55em; padding-left: 1.3em; }
+.daycard .dc-body h3, .daycard .dc-body h4 { font-size: 14px; margin: 0.6em 0 0.3em; color: var(--text); }
+.daycard .dc-body blockquote { margin: 0 0 0.55em; padding-left: 10px; border-left: 2px solid var(--line); }
+.daycard .dc-body code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; font-size: 0.92em; }
+
+.searchbar { display: flex; gap: 8px; margin-bottom: 16px; }
+.searchbar input {
+  flex: 1; border: 1px solid var(--line); background: var(--surface);
+  border-radius: var(--radius); padding: 10px 14px; outline: none;
+}
+.searchbar input:focus { border-color: var(--accent); }
+
+.hit { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; }
+.hit .h-date { font-size: 12px; color: var(--text-3); margin-bottom: 4px; }
+.hit mark { background: var(--accent-soft); color: var(--accent); border-radius: 3px; padding: 0 2px; }
+
+.reportrow {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px;
+}
+.reportrow .rr-name { flex: 1; font-size: 13.5px; }
+.reportrow button {
+  border: 1px solid var(--line); background: none; border-radius: 6px;
+  padding: 4px 10px; font-size: 12px; color: var(--text-2);
+}
+.reportrow button:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn {
+  border: 1px solid var(--line); background: var(--surface); color: var(--text);
+  border-radius: var(--radius); padding: 8px 14px; font-size: 13px;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-on); border-color: var(--accent); }
+.btn.danger { background: var(--danger); color: var(--accent-on); border-color: var(--danger); }
+.btn.danger:hover { border-color: var(--danger); color: var(--accent-on); filter: brightness(1.08); }
+
+/* ---------- 设置 ---------- */
+
+.field { margin-bottom: 22px; max-width: 620px; }
+.field > label { display: block; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); margin-bottom: 8px; }
+.field .desc { font-size: 12.5px; color: var(--text-3); margin-top: 6px; }
+.field input[type='number'], .field input[type='text'] {
+  border: 1px solid var(--line); background: var(--surface);
+  border-radius: var(--radius); padding: 8px 12px; width: 120px; outline: none;
+}
+.field .mono { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; color: var(--text-2); }
+
+.themes { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+.themecard {
+  border: 1px solid var(--line); border-radius: var(--radius-lg);
+  padding: 12px; background: var(--surface); text-align: left;
+}
+.themecard.on { border-color: var(--accent); background: var(--accent-soft); }
+.themecard .swatch { height: 34px; border-radius: 7px; margin-bottom: 9px; display: flex; overflow: hidden; }
+.themecard .swatch i { flex: 1; }
+.themecard .tn { font-size: 13px; font-weight: 500; }
+.themecard .td { font-size: 11.5px; color: var(--text-3); }
+
+/* ---------- 完成弹框 ---------- */
+
+.modal-mask {
+  position: absolute; inset: 0; background: rgba(20, 20, 24, 0.34);
+  display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 40;
+}
+.modal {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); padding: 20px 22px; width: 100%; max-width: 420px;
+}
+.modal h3 { margin: 0 0 4px; font-size: 16px; font-family: var(--font-title); }
+.modal .m-sub { font-size: 12.5px; color: var(--text-3); margin-bottom: 16px; }
+.modal .m-row { margin-bottom: 14px; }
+.modal .m-row label { display: block; font-size: 12px; color: var(--text-3); margin-bottom: 5px; }
+.modal .m-row input, .modal .m-row textarea {
+  width: 100%; border: 1px solid var(--line); background: var(--bg);
+  border-radius: var(--radius); padding: 9px 11px; outline: none; resize: vertical;
+}
+.modal .m-row input:focus, .modal .m-row textarea:focus { border-color: var(--accent); }
+/* 说明/补充：多行、字号和正文一致，好写 */
+.modal .m-row .m-note {
+  font-family: inherit; font-size: 13px; line-height: 1.65;
+  min-height: 58px;
+}
+.modal .m-foot { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+.modal .m-skip { margin-right: auto; border: none; background: none; color: var(--text-3); font-size: 12.5px; }
+
+/* 修改事项弹框 */
+.modal.modal-wide { max-width: 540px; }
+.modal .m-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+/* ---------- 待分配（直接摊在列表下面，不是弹窗） ---------- */
+.poolsect {
+  /* 左右留 12px，和上面事项行的内容对齐（.item 自己是 padding: 11px 12px） */
+  margin-top: 18px; padding: 11px 12px 0;
+  border-top: 1px dashed var(--line);
+}
+.poolsect-head {
+  display: flex; align-items: baseline; gap: 7px;
+  font-size: 12px; color: var(--text-2); letter-spacing: 0.06em;
+  margin-bottom: 1px;
+}
+.poolsect-count {
+  font-size: 11px; color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.poolsect-hint { font-size: 11px; color: var(--text-3); letter-spacing: 0; }
+
+.pitem { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+.pitem + .pitem { border-top: 1px solid var(--line-2); }
+.pitem-main { flex: 1; min-width: 0; }
+.pitem-title {
+  font-size: 13.5px; color: var(--text-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pitem-main .it-note { margin-top: 2px; }
+.pitem-main .it-meta { margin-top: 2px; }
+
+.pitem-acts { display: flex; align-items: center; gap: 4px; flex: none; }
+.pitem-acts button {
+  border: 1px solid var(--line); background: var(--surface); color: var(--text-2);
+  border-radius: 7px; padding: 4px 10px; font-size: 12px; cursor: pointer;
+  min-height: 28px; white-space: nowrap;
+}
+.pitem-acts button:hover { border-color: var(--accent); color: var(--accent); }
+.pitem-acts button.del { padding: 4px 8px; color: var(--text-3); }
+.pitem-acts button.del:hover { border-color: var(--danger); color: var(--danger); }
+.pitem-date {
+  border: 1px solid var(--line); background: var(--surface); color: var(--text-3);
+  border-radius: 7px; padding: 3px 6px; font-size: 12px; outline: none;
+  min-height: 28px; box-sizing: border-box; width: 118px;
+}
+.pitem-date:focus { border-color: var(--accent); color: var(--text-2); }
+
+/* ---------- 快速记录窗 ---------- */
+
+.quick {
+  height: 100vh; display: flex; align-items: center; gap: 10px;
+  padding: 0 16px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.quick .q-mark { font-family: var(--font-title); font-size: 18px; color: var(--accent); }
+.quick input {
+  flex: 1; border: none; background: none; outline: none; font-size: 15px;
+}
+.quick .q-hint { font-size: 11px; color: var(--text-3); white-space: nowrap; }
+
+/* ---------- 睡眠 ---------- */
+
+/* 分档配色：正常绿 / 偏少琥珀 / 严重不足红 / 偏多灰。
+   灰用 --text-3，表示「值得留意但不算异常」，免得跟红色抢注意力。 */
+.b-ok { background: var(--ok); }
+.b-short { background: var(--warn); }
+.b-low { background: var(--danger); }
+.b-long { background: var(--text-3); }
+
+.sleep-entry {
+  display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap;
+  padding: 0 0 14px; margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.sleep-entry.bad { border-bottom-color: color-mix(in srgb, var(--danger) 40%, var(--line)); }
+.se-field { display: flex; flex-direction: column; gap: 5px; }
+.se-row { display: flex; align-items: center; gap: 6px; }
+.se-label { font-size: 12px; color: var(--text-3); letter-spacing: 0.06em; }
+.se-time {
+  border: 1px solid var(--line); background: none; color: var(--text);
+  border-radius: 999px; padding: 4px 10px; font-size: 14px; outline: none;
+  font-variant-numeric: tabular-nums;
+}
+.se-time:focus { border-color: var(--accent); }
+.se-word { font-size: 11.5px; color: var(--text-3); }
+.se-nudge { display: inline-flex; gap: 2px; }
+.se-nb {
+  border: 1px solid var(--line); background: none; color: var(--text-3);
+  width: 20px; height: 20px; line-height: 1; border-radius: 5px; font-size: 12px;
+  padding: 0; cursor: pointer;
+}
+.se-nb:hover { border-color: var(--accent); color: var(--text); }
+.se-readout { display: flex; align-items: center; gap: 8px; padding-bottom: 4px; }
+.se-dur { font-size: 16px; color: var(--text); font-variant-numeric: tabular-nums; }
+.se-bad { font-size: 12px; color: var(--danger); padding-bottom: 6px; }
+.se-actions { display: flex; align-items: center; gap: 8px; padding-bottom: 2px; }
+.se-del { border: none; background: none; color: var(--text-3); font-size: 12px; padding: 2px 6px; border-radius: 5px; cursor: pointer; }
+.se-del:hover { background: var(--surface-2); color: var(--danger); }
+.sleep-chip { font-size: 11px; line-height: 1.7; border-radius: 3px; padding: 0 6px; white-space: nowrap; }
+.sleep-chip.b-ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 13%, transparent); }
+.sleep-chip.b-short { color: var(--warn); background: color-mix(in srgb, var(--warn) 13%, transparent); }
+.sleep-chip.b-low { color: var(--danger); background: color-mix(in srgb, var(--danger) 13%, transparent); }
+.sleep-chip.b-long { color: var(--text-2); background: var(--surface-2); }
+
+.sleep-today {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font-size: 12px; color: var(--text-2); margin: -4px 0 14px;
+}
+.se-dirty { color: var(--warn); }
+
+.sleep-chart-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+
+.sleep-chart { margin-bottom: 12px; }
+
+/* 左边留一条刻度槽，右边是绘图区；顶边那道细线就是 12 小时满格 */
+.sc-plot { display: flex; gap: 8px; height: 132px; }
+.sc-y { position: relative; width: 22px; flex: none; }
+.sc-ytick {
+  position: absolute; right: 0; transform: translateY(50%);
+  font-size: 10px; color: var(--text-3); font-variant-numeric: tabular-nums;
+}
+.sc-inner { position: relative; flex: 1; min-width: 0; border-top: 1px solid var(--line-2); }
+
+/* 正常区间的边界：极淡的横线，只做参照，不抢柱子的戏 */
+.sc-grid {
+  position: absolute; left: 0; right: 0;
+  border-top: 1px solid var(--line);
+  pointer-events: none;
+}
+
+/* 7 小时下限：虚线要穿过柱子（z-index 必须高于柱子，否则等于没画）。
+   这里刻意不用 opacity —— 父元素的 opacity 会连标签一起变透明，标签就压不住柱子的颜色了。 */
+.sc-ref {
+  position: absolute; left: 0; right: 0; z-index: 3;
+  border-top: 1px dashed var(--text-3);
+  pointer-events: none;
+}
+
+.sc-bars { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 10px; }
+.sc-col {
+  position: relative; flex: 1; min-width: 0; height: 100%;
+  display: flex; align-items: flex-end; justify-content: center;
+  cursor: default;
+}
+.sc-col:not(.empty) { cursor: pointer; }
+.sc-bar { display: block; width: 100%; max-width: 32px; border-radius: 4px 4px 0 0; }
+.sc-col:hover .sc-bar { filter: brightness(0.93); }
+/* 选中（从图上回看那一天）：一圈细环，不改变柱子颜色 */
+.sc-col.picked .sc-bar { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--text-2); }
+
+/* 基线：柱子站在一条线上，而不是悬在空中 */
+.sc-base { position: absolute; left: 0; right: 0; bottom: 0; border-top: 1px solid var(--line); }
+
+/* 90 天太密：间距收紧、柱宽变小，否则一片糊 */
+.sleep-chart.dense .sc-bars { gap: 2px; }
+.sleep-chart.dense .sc-bar { border-radius: 2px 2px 0 0; max-width: 9px; }
+
+.sc-axis { display: flex; gap: 10px; margin-top: 6px; padding-left: 30px; }
+.sc-axis-pad { width: 0; flex: none; }
+.sc-tick {
+  flex: 1; min-width: 0; text-align: center;
+  font-size: 10px; color: var(--text-3); font-variant-numeric: tabular-nums;
+}
+.sc-tick.today { color: var(--accent); font-weight: 600; }
+
+.sc-foot {
+  display: flex; align-items: center; gap: 8px; margin-top: 8px;
+  font-size: 11.5px; color: var(--text-3);
+}
+.sc-tip { color: var(--text-3); }
+.sc-sep { color: var(--line); }
+
+.sleep-peek {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 9px 12px; margin-bottom: 14px;
+  background: var(--surface); border-radius: var(--radius);
+  font-size: 12.5px; color: var(--text-2);
+}
+.sp-date { font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.sp-main { font-size: 15px; color: var(--text); font-variant-numeric: tabular-nums; }
+.sp-times { color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+/* 分档：一条堆叠条 + 一行图例。它同时是柱状图的图例，所以上面不再重复一排色块。 */
+.sleep-dist { margin: 14px 0 16px; }
+.sd-bar {
+  display: flex; height: 10px; border-radius: 999px; overflow: hidden;
+  background: var(--surface-2);
+}
+.sd-seg { display: block; height: 100%; }
+.sd-seg + .sd-seg { box-shadow: inset 1px 0 0 var(--surface); }
+.sd-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; }
+.sd-item {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; color: var(--text-2);
+}
+.sd-item b {
+  font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums;
+  margin: 0 2px 0 3px;
+}
+.sd-item.zero { color: var(--text-3); }
+.sd-item.zero b { color: var(--text-3); font-weight: 400; }
+.sl-dot { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+
+/* 关键数字：一行，细竖线分隔。不是六张各自为政的小卡片。 */
+.sleep-metrics {
+  display: flex; align-items: flex-start; flex-wrap: wrap; gap: 0 22px;
+  padding: 14px 2px; margin-bottom: 4px;
+  border-top: 1px solid var(--line-2);
+  border-bottom: 1px solid var(--line-2);
+}
+.sm-item { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sm-v {
+  font-size: 19px; color: var(--text); line-height: 1.25;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.sm-v i { font-style: normal; font-size: 12px; color: var(--text-3); margin-left: 2px; }
+.sm-k { font-size: 11.5px; color: var(--text-3); white-space: nowrap; }
+.sm-k em {
+  display: block; font-style: normal; font-size: 11px; margin-top: 1px;
+  color: var(--text-3);
+}
+.sm-k em.up { color: var(--ok); }
+.sm-k em.down { color: var(--warn); }
+.sm-sep { width: 1px; align-self: stretch; background: var(--line-2); margin: 2px 0; }
+
+/* 更多数据：默认收起 */
+.sleep-more {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: none; background: none; padding: 6px 0;
+  font: inherit; font-size: 11.5px; color: var(--text-3); cursor: pointer;
+}
+.sleep-more:hover { color: var(--accent); }
+.sm-caret { font-style: normal; font-size: 9px; }
+.sleep-details {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px 22px; margin: 2px 0 16px; padding: 12px 2px 0;
+}
+.sleep-details > div { display: flex; align-items: baseline; gap: 8px; }
+.sleep-details dt { font-size: 11.5px; color: var(--text-3); }
+.sleep-details dd {
+  margin: 0; font-size: 13px; color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.sleep-miss {
+  padding: 9px 12px; margin-bottom: 16px;
+  border-left: 2px solid var(--warn);
+  background: color-mix(in srgb, var(--warn) 7%, transparent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 12px; color: var(--text-2); line-height: 1.6;
+}
+.sleep-miss b { color: var(--text); font-weight: 500; }
+
+.sleep-report { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+
+/* 报告正文：点了按钮就在页面上看，不用去 reports/ 翻文件 */
+.sleep-report-body {
+  margin-bottom: 22px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+.srb-head {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 9px 14px; border-bottom: 1px solid var(--line-2);
+  background: var(--surface-2);
+}
+.srb-title { font-size: 13px; color: var(--text); font-weight: 500; }
+.srb-meta { font-size: 11.5px; color: var(--text-3); }
+.srb-md {
+  padding: 6px 16px 14px;
+  font-size: 13px; color: var(--text-2); line-height: 1.8;
+  max-height: 460px; overflow: auto;
+}
+.srb-md h1 { font-size: 16px; font-family: var(--font-title); color: var(--text); margin: 14px 0 6px; }
+.srb-md h2 { font-size: 14px; color: var(--text); margin: 16px 0 6px; }
+.srb-md h3 { font-size: 13px; color: var(--text); margin: 12px 0 4px; }
+.srb-md p { margin: 6px 0; }
+.srb-md ul { margin: 6px 0; padding-left: 20px; }
+.srb-md li { margin: 3px 0; }
+.srb-md strong { color: var(--text); font-weight: 500; }
+.srb-md code {
+  font-family: var(--font-mono); font-size: 12px;
+  background: var(--surface-2); border-radius: 3px; padding: 1px 4px;
+}
+.srb-md table { border-collapse: collapse; margin: 8px 0; font-size: 12.5px; }
+.srb-md th, .srb-md td { border: 1px solid var(--line-2); padding: 4px 9px; text-align: left; }
+.srb-md th { background: var(--surface-2); font-weight: 500; }
+
+.sleep-note {
+  max-width: 640px; padding-top: 12px;
+  border-top: 1px solid var(--line-2);
+  font-size: 12px; color: var(--text-3); line-height: 1.75;
+}
+.sleep-note b { color: var(--text-2); font-weight: 500; }
+
+/* ---------- 日志页：一天一篇 ---------- */
+
+.logbar { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; flex: none; }
+
+/* 写作视图的容器：撑满剩余高度，让子元素能按高度分配（而不是按内容） */
+.logwrap {
+  display: flex; gap: 26px; align-items: stretch;
+  flex: 1; min-height: 0;
+}
+
+/* 左：日期列表。窄，只列有内容的天 + 今天。满高滚动 */
+.loglist {
+  width: 178px; flex: none;
+  display: flex; flex-direction: column; gap: 2px;
+  min-height: 0; overflow: auto;
+  padding-right: 2px;
+}
+.logday {
+  display: flex; flex-direction: column; gap: 1px; width: 100%;
+  border: none; background: none; cursor: pointer; text-align: left;
+  padding: 6px 9px; border-radius: 7px; color: var(--text-2);
+}
+.logday:hover { background: var(--surface-2); }
+.logday.on { background: var(--accent-soft); color: var(--text); }
+.logday-top { display: flex; align-items: baseline; gap: 7px; width: 100%; }
+.logday-rel { font-size: 12.5px; white-space: nowrap; }
+.logday.on .logday-rel { color: var(--accent); font-weight: 500; }
+.logday .grow { flex: 1; }
+.logday-pin {
+  font-size: 10.5px; color: var(--accent); background: var(--accent-soft);
+  border-radius: 3px; padding: 0 4px; white-space: nowrap;
+}
+/* 写了 / 没写，用一个小圆点的实心与否表示，比文字省地方 */
+.logday-mark { font-size: 11px; color: var(--line); line-height: 1; }
+.logday-mark.on { color: var(--ok); }
+/* 过往日纪的标题：光看日期想不起来那天写了什么 */
+.logday-title {
+  display: block; width: 100%;
+  font-size: 11.5px; color: var(--text-2); line-height: 1.45;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding-left: 1px;
+}
+.logday-title.muted { color: var(--text-3); }
+.logday.on .logday-title { color: var(--text); }
+
+/* 「最后改于」：主栏标题旁 / 日历预览里，都用同一个小字 */
+.logwhen, .cp-when {
+  font-size: 11.5px; color: var(--text-3);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+/* 「共 N 次」跟在时间后面，比时间再淡一点，别抢 */
+.logwhen .logedits { font-style: normal; margin-left: 7px; opacity: 0.85; }
+.cp-when { margin-left: 8px; }
+
+/* 右：一天一篇的编辑区。整栏撑满高度，正文区在栏内滚动 */
+.logmain { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+/* 编辑记录：单独一行。之前塞在标题行里当小字，用户根本看不见。 */
+.logedits-bar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  flex: none;
+  margin: -6px 0 12px; padding: 6px 10px;
+  background: var(--surface-2); border-radius: var(--radius);
+  font-size: 11.5px; color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.leb-tag {
+  font-size: 10.5px; letter-spacing: 0.12em; color: var(--text-3);
+  padding-right: 2px;
+}
+.leb-dot { color: var(--text-3); opacity: 0.6; }
+
+.logmain-head {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 12px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-2);
+  flex: none;
+}
+.logmain-head h2 {
+  font-family: var(--font-title);
+  font-size: 16px; font-weight: 500; color: var(--text); margin: 0;
+}
+.logmain-head .grow { flex: 1; }
+.logmain-head .logstat { font-size: 11.5px; color: var(--text-3); white-space: nowrap; }
+
+/* 前一天 / 后一天 / 今天 */
+.daynav { display: flex; align-items: center; gap: 4px; }
+.daynav button {
+  border: 1px solid var(--line); background: var(--surface); color: var(--text-2);
+  border-radius: 7px; padding: 3px 9px; font-size: 12px;
+}
+.daynav button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.daynav button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* 正文区：左边写作、右边当天完成。两栏各自独立滚动，
+   所以日志写得再长，右边那栏也一直看得见（以前它压在正文下面，一长就沉出屏幕）。 */
+.logbody {
+  display: flex; align-items: stretch; gap: 20px;
+  flex: 1; min-height: 0;
+}
+.loginner {
+  max-width: 760px; width: 100%; margin: 0 auto;
+  display: flex; flex-direction: column; flex: 1; min-height: 0;
+}
+.logtitle-input {
+  width: 100%; box-sizing: border-box; margin-bottom: 8px;
+  font-family: var(--font-title);
+  font-size: 17px; font-weight: 500; color: var(--text);
+  border: none; border-bottom: 1px solid transparent;
+  background: none; padding: 4px 0;
+}
+.logtitle-input:focus { outline: none; border-bottom-color: var(--line); }
+.logtitle-input::placeholder { color: var(--text-3); font-weight: 400; }
+
+.loghint { font-size: 12px; color: var(--text-3); margin-bottom: 10px; flex: none; }
+
+/* 右栏：当天完成的事项。只读回看，让人想起来「那天干了什么」。
+   flex:none 保证它不参与高度分配，自己滚自己的。 */
+.logside {
+  width: 208px; flex: none;
+  min-height: 0; overflow: auto;
+  padding-left: 18px;
+  border-left: 1px solid var(--line-2);
+}
+.logdone h4 {
+  font-size: 11.5px; letter-spacing: 0.08em;
+  color: var(--text-3); font-weight: 500; margin: 0 0 8px;
+}
+.logdone-empty { font-size: 12px; color: var(--text-3); line-height: 1.6; }
+.logdone-list { display: flex; flex-direction: column; gap: 6px; }
+.logdone-row { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--text-2); line-height: 1.45; }
+.logdone-row .t { flex: 1; min-width: 0; }
+.logdone-row .m { font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; flex: none; }
+
+/* 窄屏时右栏收到下面去，别把正文挤没了 */
+@media (max-width: 900px) {
+  .logbody { flex-direction: column; }
+  .logside {
+    width: auto; max-height: none; overflow: visible;
+    padding-left: 0; padding-top: 14px;
+    border-left: none; border-top: 1px solid var(--line-2);
+  }
+}
+
+/* 搜索日志 */
+.logsearch { margin-bottom: 14px; }
+.loghit {
+  padding: 9px 11px; border-radius: var(--radius); cursor: pointer;
+  border: 1px solid transparent; margin-bottom: 6px;
+}
+.loghit:hover { background: var(--surface); border-color: var(--line); }
+.loghit-date { font-size: 12px; color: var(--accent); margin-bottom: 3px; }
+.loghit-body { font-size: 13px; color: var(--text-2); line-height: 1.65; }
+.loghit mark { background: var(--accent-soft); color: var(--accent); border-radius: 2px; }
+
+/* 日历视图 */
+/* ---------- 日历视图：左边选日期，右边只读预览 ---------- */
+
+.calwrap { display: flex; gap: 26px; align-items: stretch; flex: 1; min-height: 0; }
+.calcol { width: 470px; flex: none; min-height: 0; overflow: auto; }
+
+.logcal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.logcal-wd { font-size: 11px; color: var(--text-3); text-align: center; padding-bottom: 3px; }
+.logcal-day {
+  aspect-ratio: 1; border: 1px solid var(--line); border-radius: 7px;
+  background: var(--surface); color: var(--text-2);
+  font-size: 12px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px;
+}
+.logcal-day:hover { border-color: var(--accent); }
+.logcal-day.blank { border: none; background: none; }
+.logcal-day.written { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.logcal-day.today { outline: 1.5px solid var(--accent); outline-offset: -1px; }
+.logcal-day.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.logcal-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--ok); }
+.logcal-dot.hidden { background: transparent; }
+.logcal-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.logcal-head .ym { font-size: 13.5px; font-weight: 500; }
+
+/* 右侧预览区：把日历没用到的空间用起来。
+   高亮：min-height:0 + overflow:auto —— 预览自己在框内滚。
+   以前没有这两条，遇到一篇很长的旧日记，正文会把这一栏撑得比视口还高，
+   整页跟着滚、左栏日历被甩到一边，看起来就是「内容超出了边界」。 */
+.calpeek {
+  flex: 1; min-width: 0; min-height: 0;
+  overflow: auto;
+  padding-left: 24px; border-left: 1px solid var(--line-2);
+}
+.cp-head {
+  display: flex; align-items: center; gap: 8px;
+  padding-bottom: 10px; margin-bottom: 14px;
+  border-bottom: 1px solid var(--line-2);
+}
+.cp-date { font-family: var(--font-title); font-size: 15px; color: var(--text); }
+.cp-head .grow { flex: 1; }
+.cp-pin {
+  font-size: 11px; color: var(--accent); background: var(--accent-soft);
+  border-radius: 3px; padding: 1px 6px;
+}
+.cp-title {
+  font-family: var(--font-title);
+  font-size: 17px; font-weight: 500; color: var(--text); margin: 0 0 10px;
+}
+/* 预览正文复用编辑器的排版观感，但只读 */
+.cp-body { font-size: 14px; color: var(--text); line-height: 1.75; }
+.cp-body p { margin: 0 0 0.7em; }
+.cp-body h1, .cp-body h2, .cp-body h3 { font-family: var(--font-title); margin: 1em 0 0.4em; line-height: 1.35; }
+.cp-body h1 { font-size: 19px; } .cp-body h2 { font-size: 17px; } .cp-body h3 { font-size: 15px; }
+.cp-body ul, .cp-body ol { padding-left: 1.4em; margin: 0 0 0.7em; }
+.cp-body code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; font-size: 0.92em; }
+.cp-body pre { background: var(--surface-2); padding: 10px 12px; border-radius: var(--radius); overflow: auto; }
+.cp-body pre code { background: none; padding: 0; }
+.cp-body blockquote { margin: 0 0 0.7em; padding-left: 12px; border-left: 2px solid var(--line); color: var(--text-2); }
+.cp-body a { color: var(--accent); text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px; }
+.cp-body hr { border: none; border-top: 1px solid var(--line); margin: 1em 0; }
+
+.cp-done { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--line-2); }
+.cp-done h4 {
+  font-size: 11.5px; letter-spacing: 0.08em;
+  color: var(--text-3); font-weight: 500; margin: 0 0 8px;
+}
+.cp-done-empty { font-size: 12px; color: var(--text-3); }
+.cp-done-row { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--text-2); line-height: 1.6; }
+.cp-done-row .t { flex: 1; min-width: 0; }
+.cp-done-row .m { font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; flex: none; }
+
+/* 窄屏：预览收到日历下面。这里必须允许整页滚（高度不够放两栏），
+   所以把 .scroll 的 overflow 放开一些。 */
+@media (max-width: 980px) {
+  .scroll.log-scroll-cal { overflow: auto; display: block; }
+  .calwrap { flex-direction: column; align-items: stretch; flex: none; }
+  .calcol { width: 100%; overflow: visible; }
+  .calpeek {
+    padding-left: 0; padding-top: 18px;
+    border-left: none; border-top: 1px solid var(--line-2);
+    width: 100%; overflow: visible;
+  }
+}
+
+/* 顶部统计条 */
+.logstats {
+  display: flex; gap: 18px; flex-wrap: wrap;
+  margin-bottom: 14px; padding: 9px 12px;
+  background: var(--surface); border: 1px solid var(--line);
+  flex: none;
+  border-radius: var(--radius); font-size: 12.5px; color: var(--text-2);
+}
+.logstats b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+/* 保存状态：一个点 + 一句话。有未保存改动时最需要被看见，
+   所以 dirty/saving 用琥珀色，落盘是绿的，失败是红的。
+   比原来那句 1.5 秒就消失的「已写入」更能让人放心。 */
+.savestate {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text-3); white-space: nowrap;
+}
+.savestate .sv-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex: none;
+  background: var(--text-3); opacity: 0.55;
+}
+.savestate.wait { color: var(--warn); }
+.savestate.wait .sv-dot { background: var(--warn); opacity: 1; }
+.savestate.ok { color: var(--text-3); }
+.savestate.ok .sv-dot { background: var(--ok); opacity: 1; }
+.savestate.bad { color: var(--danger); }
+.savestate.bad .sv-dot { background: var(--danger); opacity: 1; }
+
+/* 今日页右下角的日志摘要：只是「写过没有」的一个影子，正文在日志页 */
+.logteaser {
+  font-size: 12.5px; color: var(--text-2); line-height: 1.7;
+  padding: 8px 10px; border-radius: 7px;
+  background: var(--surface-2); cursor: default;
+}
+
+/* 固定区里的日志：一天一条，带摘要 */
+.pinlog {
+  border-left: 3px solid var(--accent);
+  padding: 5px 0 7px 11px; margin-bottom: 9px;
+}
+.pinlog-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
+.pinlog-head .grow { flex: 1; }
+.pinlog-head .refpinbtn { flex: none; }
+.pinlog-title { font-size: 12.5px; color: var(--text); font-weight: 500; }
+
+/* 日期做成可点按钮：点了跳到日志页那一天，方便看全文。
+   样子还是「文字」，只是多了 hover 的下划线和主色，不做成按钮块，
+   免得固定区里一堆方块按钮太吵。 */
+.pinlog-jump {
+  border: 0; background: none; padding: 0; margin: 0;
+  font: inherit; font-size: 12px; color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer; border-bottom: 1px dashed transparent;
+}
+.pinlog-jump:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* 摘要：最多三行，超出打省略号。固定区一行一条，不能让它无限长。 */
+.pinlog-body {
+  font-size: 12.5px; color: var(--text-2); line-height: 1.65;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 展开后的全文：贴左边框，保留换行。固定区本身有高度，里面可滚。 */
+.pinlog-full {
+  font-size: 12.5px; color: var(--text-2); line-height: 1.7;
+  white-space: pre-wrap; word-break: break-word;
+  max-height: 340px; overflow: auto;
+  padding-right: 4px;
+}
+.pinlog-full > *:first-child { margin-top: 0; }
+.pinlog-full > *:last-child { margin-bottom: 0; }
+
+/* 日记的正文区撑满剩余高度。
+   关键：这里必须是**有界的** flex 子项，编辑器才能在框内滚。
+   以前只有 min-height，没有上限，父链又没高度约束，
+   于是编辑器随内容无限长高、overflow:auto 永远不触发 —— 光标跑出框外、整页越写越长。
+   现在高度链是：.main → .scroll.log-scroll-write(flex column) → .logwrap →
+   .logmain → .logbody → .loginner → .editor-wrap，每一层都 min-height:0 + flex:1。 */
+.logbody .editor-wrap {
+  flex: 1; min-height: 220px;
+}
+
+/* ---------- 界面缩放 ---------- */
+
+.zoomsel { display: flex; gap: 4px; }
+.zoomchip {
+  border: 1px solid var(--line); background: var(--surface); color: var(--text-2);
+  border-radius: 7px; padding: 4px 12px; font-size: 12.5px;
+}
+.zoomchip:hover { border-color: var(--accent); color: var(--accent); }
+.zoomchip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+/* ---------- 周程：一周的分配板 ---------- */
+
+.weeknav { display: flex; gap: 6px; align-items: center; }
+.weeknav button { padding: 4px 10px; font-size: 12px; }
+.weeknav button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* 和日纪写作页一个套路：.scroll 不再自己滚，把高度传下去，
+   让左右两栏各自在框内滚（否则列一多整页就跟着长）。 */
+.scroll.week-scroll {
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  padding-bottom: 24px;
+}
+
+/* 负荷 + 完成率 总览条 */
+.weekstats {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  flex: none;
+  padding: 9px 12px; margin-bottom: 14px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); font-size: 12.5px; color: var(--text-2);
+}
+.weekstats b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+.weekstats b.warn { color: var(--warn); }
+.weekstats .wssep { width: 1px; height: 16px; background: var(--line); }
+.weekstats .wsnote { color: var(--text-3); margin-left: 4px; }
+
+/* ---------- 周程：加一件事的小表单 ---------- */
+.wkadd {
+  position: fixed; z-index: 70;
+  width: 264px; padding: 11px 12px 10px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
+  display: flex; flex-direction: column; gap: 9px;
+}
+.wkadd-head { font-size: 11px; color: var(--text-3); letter-spacing: 0.04em; }
+.wkadd-title {
+  width: 100%; box-sizing: border-box;
+  border: none; border-bottom: 1px solid var(--line-2); background: none;
+  font-size: 14.5px; color: var(--text); padding: 2px 0 6px;
+}
+.wkadd-title:focus { outline: none; border-bottom-color: var(--accent); }
+.wkadd-title::placeholder { color: var(--text-3); }
+.wkadd-row { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--text-3); }
+.wkadd-gap { flex: 1; }
+.wkadd-num, .wkadd-time {
+  border: 1px solid var(--line); border-radius: 6px; background: var(--bg);
+  color: var(--text-2); font-size: 12px; padding: 3px 6px;
+}
+.wkadd-num { width: 52px; }
+.wkadd-time { width: 92px; }
+.wkadd-num:focus, .wkadd-time:focus { outline: none; border-color: var(--accent); }
+.wkadd-unit { font-size: 11px; }
+.wkadd-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.wkadd-ok { padding: 4px 16px; font-size: 12.5px; }
+
+/* ---------- 周程：固定事项（不摊进日列，单独一条带子） ---------- */
+.weekpinned {
+  flex: none;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px 14px 12px; margin-bottom: 14px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.wkp-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.wkp-title {
+  font-size: 11.5px; letter-spacing: 0.1em; color: var(--accent);
+  text-transform: uppercase;
+}
+.wkp-hint { font-size: 11.5px; color: var(--text-3); }
+.wkp-list { display: flex; flex-wrap: wrap; gap: 7px; }
+
+/* 每条：左侧主色竖条 + 「固定」小字，和日列里的小方块明显不是一类东西 */
+.wkpchip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 4px 6px 4px 9px;
+  background: var(--surface-2);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 7px 7px 0;
+  max-width: 100%;
+}
+.wkp-badge { font-size: 10px; color: var(--accent); letter-spacing: 0.06em; flex: none; }
+.wkp-name {
+  font-size: 12.5px; color: var(--text); min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.wkp-meta {
+  font-size: 11px; color: var(--text-3); flex: none;
+  font-variant-numeric: tabular-nums;
+}
+.wkp-done {
+  flex: none; width: 17px; height: 17px; padding: 0;
+  border-radius: 50%; border: 1px solid var(--line); background: var(--surface);
+  color: var(--text-3); font-size: 10px; line-height: 1; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.wkp-done:hover { border-color: var(--accent); color: var(--accent); }
+
+.weekwrap { display: flex; gap: 14px; align-items: stretch; flex: 1; min-height: 0; }
+
+/* 左：待分配池 */
+.weekpool {
+  width: 218px; flex: none; min-height: 0;
+  display: flex; flex-direction: column;
+  border-right: 1px solid var(--line-2); padding-right: 14px;
+}
+.wp-head {
+  display: flex; align-items: baseline; gap: 6px; flex: none;
+  font-size: 12px; letter-spacing: 0.06em; color: var(--text-3);
+  margin-bottom: 4px;
+}
+.wp-count {
+  font-size: 11px; color: var(--accent); background: var(--accent-soft);
+  border-radius: 3px; padding: 0 5px; font-variant-numeric: tabular-nums;
+}
+.wp-hint { font-size: 11px; color: var(--text-3); margin-bottom: 8px; flex: none; line-height: 1.5; }
+.wp-list { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 3px; padding-right: 2px; }
+
+.wpitem {
+  display: flex; align-items: baseline; gap: 6px;
+  padding: 5px 8px; border-radius: 7px;
+  border: 1px solid var(--line); background: var(--surface);
+  cursor: grab; font-size: 12.5px;
+}
+.wpitem:hover { border-color: var(--accent); }
+.wpitem.on { border-color: var(--accent); background: var(--accent-soft); }
+.wpitem.dragging { opacity: 0.45; }
+.wptag {
+  flex: none; font-size: 10.5px; border-radius: 3px; padding: 0 4px;
+  color: var(--text-3); background: var(--surface-2);
+}
+.wptag.t-old { color: var(--warn); background: var(--accent-soft); }
+.wptag.t-today { color: var(--ok); background: var(--surface-2); }
+.wp-title { flex: 1; min-width: 0; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wp-est { flex: none; font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+/* 右：这一周 7 天 */
+.weekgrid { display: flex; gap: 8px; flex: 1; min-height: 0; overflow-x: auto; overflow-y: hidden; }
+.weekcol {
+  flex: 1 0 132px; min-width: 132px; min-height: 0;
+  display: flex; flex-direction: column;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface);
+  padding: 8px 7px;
+}
+.weekcol.over { border-color: var(--accent); background: var(--accent-soft); }
+.weekcol.heavy { border-color: var(--warn); }
+.weekcol.today { box-shadow: inset 0 0 0 1px var(--accent); }
+
+.wc-head { display: flex; align-items: baseline; gap: 5px; flex: none; margin-bottom: 5px; }
+.wc-wd { font-size: 12.5px; color: var(--text); font-weight: 500; }
+.wc-date { font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+/* 负荷：这一天的合计 */
+.wc-load {
+  flex: none; font-size: 11.5px; color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  padding-bottom: 6px; margin-bottom: 6px;
+  border-bottom: 1px solid var(--line-2);
+  display: flex; align-items: center; gap: 5px;
+}
+.wc-load.warn { color: var(--warn); font-weight: 500; }
+.wc-heavy {
+  font-size: 10.5px; color: var(--warn);
+  background: var(--accent-soft); border-radius: 3px; padding: 0 4px;
+}
+
+.wc-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+
+.wchip {
+  display: flex; align-items: flex-start; gap: 5px;
+  padding: 4px 6px; border-radius: 6px;
+  background: var(--surface-2); cursor: grab;
+  font-size: 12px;
+}
+.wchip:hover { background: var(--accent-soft); }
+.wchip.done { opacity: 0.6; }
+.wchip.done .wchip-title { text-decoration: line-through; }
+.wchip.dropped { opacity: 0.45; }
+.wchip-check {
+  flex: none; border: none; background: none; cursor: pointer;
+  color: var(--text-3); font-size: 11px; padding: 0; line-height: 1.4;
+}
+.wchip-check:hover { color: var(--ok); }
+.wchip.done .wchip-check { color: var(--ok); }
+/* 列很窄：标题和时间分两行，标题最多两行再省略 ——
+   挤成一行的话「方案：第二部分」只会剩下「写方案…」，等于没说。 */
+.wchip-body { flex: 1; min-width: 0; display: block; }
+.wchip-title {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; word-break: break-word;
+  color: var(--text); line-height: 1.35;
+}
+.wchip-est { display: block; font-size: 10.5px; color: var(--text-3); font-variant-numeric: tabular-nums; margin-top: 1px; }
+.wchip-x {
+  flex: none; border: none; background: none; cursor: pointer;
+  color: var(--text-3); font-size: 12px; padding: 0 2px; line-height: 1.3;
+}
+.wchip-x:hover { color: var(--danger); }
+
+.wc-add {
+  flex: none; margin-top: 5px;
+  border: 1px dashed var(--line); background: none; border-radius: 6px;
+  color: var(--text-3); font-size: 12px; padding: 3px 0; width: 100%;
+}
+.wc-add:hover { border-color: var(--accent); color: var(--accent); }
+.wc-add-input {
+  flex: none; margin-top: 5px; width: 100%; box-sizing: border-box;
+  border: 1px solid var(--accent); border-radius: 6px; background: var(--surface);
+  color: var(--text); font-size: 12px; padding: 4px 6px;
+}
+.wc-add-input:focus { outline: none; }
+
+.week-loading { flex: none; font-size: 11.5px; color: var(--text-3); padding-top: 6px; }
+
+/* 窄屏：池子收到上面去，7 天横向滚 */
+@media (max-width: 980px) {
+  .scroll.week-scroll { overflow: auto; display: block; }
+  .weekwrap { flex-direction: column; align-items: stretch; flex: none; }
+  .weekpool {
+    width: auto; border-right: none; padding-right: 0;
+    border-bottom: 1px solid var(--line-2); padding-bottom: 12px; margin-bottom: 12px;
+    max-height: 220px;
+  }
+  .weekgrid { flex: none; }
+  .weekcol { min-height: 240px; }
+}
+
+/* ---------- 完成率 ---------- */
+
+/* 今日页顶栏那一个 */
+.todayrate {
+  font-size: 11.5px; color: var(--text-3); white-space: nowrap;
+  padding-left: 10px; margin-left: 2px;
+  border-left: 1px solid var(--line);
+}
+.todayrate b { color: var(--accent); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+/* 回顾页「报告」里的总览 */
+.ratereport { padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+.rateover { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.rateover .ro-big {
+  font-family: var(--font-title); font-size: 26px; color: var(--accent);
+  font-variant-numeric: tabular-nums; line-height: 1.1;
+}
+.rateover .ro-sub { font-size: 12.5px; color: var(--text-3); }
+
+.rateweeks { display: flex; flex-direction: column; gap: 4px; }
+.rw-row { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.rw-label { width: 92px; flex: none; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.rw-bar {
+  flex: 1; min-width: 40px; height: 7px; border-radius: 4px;
+  background: var(--surface-2); overflow: hidden;
+}
+.rw-bar i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+.rw-pct { width: 42px; flex: none; text-align: right; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.rw-count { width: 48px; flex: none; text-align: right; color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+/* 右键菜单：在某一天上右键加一件事、在某条上右键改它。
+   position:fixed 是必须的 —— 列自己是 overflow:auto，absolute 会被裁掉；
+   挂在列外面渲染，才能贴着鼠标浮在最上层。 */
+.ctxmenu {
+  position: fixed; z-index: 60;
+  min-width: 150px; max-width: 240px;
+  padding: 4px; border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--line);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.13);
+  display: flex; flex-direction: column; gap: 1px;
+}
+.ctxmenu .ctx-head {
+  font-size: 11px; color: var(--text-3);
+  padding: 4px 8px 6px; margin-bottom: 2px;
+  border-bottom: 1px solid var(--line-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ctxmenu button {
+  border: none; background: none; text-align: left;
+  font: inherit; font-size: 12.5px; color: var(--text-2);
+  padding: 6px 8px; border-radius: 6px; cursor: pointer;
+}
+.ctxmenu button:hover { background: var(--accent-soft); color: var(--accent); }
+
+/* ---------- 滚动条 ---------- */
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+::-webkit-scrollbar-track { background: transparent; }

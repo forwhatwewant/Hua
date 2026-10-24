@@ -1,0 +1,34 @@
+{
+  "name": "hua",
+  "version": "0.1.0",
+  "private": true,
+  "description": "花 —— 记录每天要做的事、做完的事，以及做完之后的心得",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "start": "electron .",
+    "app": "vite build && electron .",
+    "test": "node scripts/check-leaks.cjs && node scripts/smoke.cjs && node scripts/test-md.mjs && node scripts/test-data.cjs && node scripts/run-ui-test.mjs && node scripts/test-browser.mjs",
+    "test:leaks": "node scripts/check-leaks.cjs",
+    "hooks:install": "git config core.hooksPath .githooks",
+    "test:ui": "node scripts/run-ui-test.mjs",
+    "test:data": "node scripts/test-data.cjs",
+    "test:browser": "node scripts/test-browser.mjs",
+    "icon": "node scripts/make-icon.cjs",
+    "seed": "node scripts/seed-demo.cjs",
+    "pkg": "vite build && node scripts/package-portable.cjs"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
+    "electron": "^44.4.3",
+    "vite": "^8.3.0"
+  },
+  "dependencies": {
+    "@tiptap/pm": "^3.31.3",
+    "@tiptap/react": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  }
+}

@@ -1,0 +1,26 @@
+# 依赖与构建产物
+node_modules/
+dist/
+build/
+out/
+release/
+
+# 本地数据 —— 绝不上传（数据目录和源码目录是分开的，源码里本来没有；
+# 这里再挡一道，防止以后把数据拷进源码目录时误提交）
+data.db
+data.db-shm
+data.db-wal
+*.db
+*.db-wal
+*.db-shm
+journal/
+reports/
+
+# 工具/临时
+.workbuddy-ai/
+tmp-*/
+.tmp-*/
+.probe/
+*.log
+.DS_Store
+Thumbs.db
