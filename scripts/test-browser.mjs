@@ -496,13 +496,13 @@ with sync_playwright() as pw:
     p.wait_for_timeout(300)
     op_after = p.evaluate("()=>getComputedStyle(document.querySelector('.composer-btn')).opacity")
     ok("写了字之后「记下」浮出来", float(op_after) > 0.9, op_after)
-    ok("注解行里是日期和预计耗时",
+    ok("注解行里是日期 / 时段 / 预计耗时",
        "今天" in p.locator(".composer-meta").inner_text()
+       and "时段" in p.locator(".composer-meta").inner_text()
        and "预计耗时" in p.locator(".composer-meta").inner_text(),
        p.locator(".composer-meta").inner_text().replace("\\n", " "))
-
-    p.locator(".composer-meta .ct-link").nth(1).click()
-    p.wait_for_timeout(300)
+    # 三个注解排成一行了，按文本点，别用索引（加一栏就点错）
+    p.locator(".composer-meta .ct-link", has_text="预计").click()
     ok("点「预计」弹出快捷档", p.locator(".ct-pop").count() == 1, p.locator(".ct-pop").count())
     ok("弹层里有 30 分钟这一档", p.locator(".ct-pop .dp-chip", has_text="30").count() == 1)
     p.locator(".ct-pop .dp-chip", has_text="30").first.click()

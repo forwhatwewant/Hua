@@ -284,12 +284,17 @@ export default function Week({ boot, reload }) {
                   </div>
 
                   <div className="wc-list">
-                    {/* 上午 / 下午 / 晚上：列很窄，隔断只留一个很小的时段名 + 一条淡线 */}
-                    {groupBySlot(items).map((g) => g.items.length === 0 ? null : (
+                    {/* 上午 / 下午 / 晚上：列很窄，隔断只留一个很小的时段名 + 一条淡线。
+                        三档一直画（空档更淡），这样七列的分段是同一个骨架，
+                        一眼就能看出「哪天上午还空着」。 */}
+                    {groupBySlot(items).map((g) => {
+                      const isNone = !g.key;
+                      if (isNone && g.items.length === 0) return null;
+                      return (
                       <Fragment key={g.key || 'none'}>
-                        {items.some((x) => slotOf(x) !== '') && (
-                          <div className={`wc-slot${g.key ? '' : ' none'}`}>{g.label}</div>
-                        )}
+                        <div className={`wc-slot${isNone ? ' none' : ''}${g.items.length ? '' : ' empty'}`}>
+                          {g.label}
+                        </div>
                         {g.items.map((it) => (
                       <div
                         key={it.id}
@@ -324,7 +329,8 @@ export default function Week({ boot, reload }) {
                       </div>
                         ))}
                       </Fragment>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <button

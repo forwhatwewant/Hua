@@ -330,6 +330,10 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
 }
 /* 「未安排」那一段更淡，它只是个兜底 */
 .it-slot.none span { color: var(--text-3); font-weight: 400; }
+/* 空档：只留一行很淡的小字，不画线 —— 它是骨架，不是内容 */
+.it-slot.empty { margin: 11px 0 1px; }
+.it-slot.empty span { color: var(--text-3); font-weight: 400; }
+.it-slot.empty::after { background: transparent; }
 
 /* 周程列里的时段隔断：列很窄，只能极小 */
 .wc-slot {
@@ -339,6 +343,9 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
 }
 .wc-slot::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 .wc-slot.none { color: var(--text-3); opacity: 0.7; }
+/* 空档：更淡、不画线，只留一个词，七列的分段仍对齐 */
+.wc-slot.empty { opacity: 0.42; margin: 5px 0 2px; }
+.wc-slot.empty::after { background: transparent; }
 
 /* 修改弹框里的时段选择 */
 .slotpick { display: flex; gap: 6px; flex-wrap: wrap; }

@@ -1272,7 +1272,23 @@ const noSlotHtml = renderToStaticMarkup(React.createElement(Today, {
   boot: { ...bootWithBacklog, memos: [], backlog: [], items: [{ ...noteItem, slot: '', startTime: null }] },
   reload: () => {}, onOpenLogAt: () => {},
 }));
-ok('一个时段都没指定时不画隔断（不凭空多出三条线）', !noSlotHtml.includes('it-slot'));
+// 反过来了：骨架要一直在。之前「一条都没指定就整块不画」，
+// 用户看到的就是「日程没有早中晚」。
+// 三档骨架 + 一条落在「未安排」里 → 4 个隔断，其中 3 个是空档
+ok('一条都没指定时三档骨架照样在（上午/下午/晚上）',
+  noSlotHtml.includes('>上午<') && noSlotHtml.includes('>下午<') && noSlotHtml.includes('>晚上<'),
+  (noSlotHtml.match(/>上午<|>下午<|>晚上</g) || []).join(' '));
+ok('三个空档都标了 empty（不画线、更淡）',
+  (noSlotHtml.match(/it-slot empty/g) || []).length === 3,
+  String((noSlotHtml.match(/it-slot empty/g) || []).length));
+ok('有内容的那条落在「未安排」里', noSlotHtml.includes('>未安排<'));
+
+// 没有「未安排」内容时，它那一档不画（它不是一天里的某一段）
+const slotOnlyHtml = renderToStaticMarkup(React.createElement(Today, {
+  boot: { ...bootWithBacklog, memos: [], backlog: [], items: [{ ...noteItem, slot: 'am', startTime: null }] },
+  reload: () => {}, onOpenLogAt: () => {},
+}));
+ok('全部排进时段后，「未安排」那一档不出现', !slotOnlyHtml.includes('>未安排<'));
 
 const modalSlotHtml = renderToStaticMarkup(React.createElement(EditItemModal, {
   item: { ...noteItem, slot: 'pm' }, allTags: [], onClose: () => {}, onSaved: () => {},
@@ -1360,8 +1376,10 @@ ok('周程的日列也按时段分组',
   weekSrc.includes('groupBySlot(items)') && weekSrc.includes('wc-slot'));
 ok('周程列里的隔断很小（10px，列太窄）',
   blockOf('.wc-slot {').includes('font-size: 10px'));
-ok('周程列里一个时段都没指定时不画隔断',
-  weekSrc.includes("items.some((x) => slotOf(x) !== '')"));
+ok('周程列里三档也一直画（空档更淡），七列骨架一致',
+  weekSrc.includes('wc-slot') && weekSrc.includes('empty')
+  && !weekSrc.includes("items.some((x) => slotOf(x) !== '')"));
+ok('周程空档有专门样式', css.includes('.wc-slot.empty'));
 
 console.log('\n[11.23] 录入时就能选「待分配」');
 const todaySrc6 = readFileSync(new URL('../src/pages/Today.jsx', import.meta.url), 'utf8');
@@ -1408,6 +1426,15 @@ const editSrc2 = readFileSync(new URL('../src/components/EditItemModal.jsx', imp
 ok('修改弹框里日期留空有提示', editSrc2.includes('留空就是「待分配」'));
 ok('修改弹框里有说明框', editSrc2.includes('说明 / 补充'));
 ok('修改弹框里有预计耗时', editSrc2.includes('预计耗时（分钟）'));
+
+console.log('\n[11.26] 录入时就能选时段（上午/下午/晚上）');
+const todaySrc7 = readFileSync(new URL('../src/pages/Today.jsx', import.meta.url), 'utf8');
+ok('录入框有「时段」注解', todaySrc7.includes("'时段'") && todaySrc7.includes('setSlotPick'));
+ok('弹层里是上午/下午/晚上 + 不指定',
+  todaySrc7.includes('SLOTS.map') && todaySrc7.includes('不指定'));
+ok('选中后注解显示时段名', todaySrc7.includes('SLOTS.find((s) => s.key === slot)'));
+ok('提交时带上 slot', todaySrc7.includes('slot: slot || null'));
+ok('记完把时段复位', todaySrc7.includes("setSlot('');"));
 
 console.log(`\n结果：${pass} 通过，${fail} 失败`);
 process.exit(fail ? 1 : 0);
