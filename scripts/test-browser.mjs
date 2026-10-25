@@ -603,6 +603,22 @@ with sync_playwright() as pw:
     after_loads = " ".join(p.locator(".wc-load").all_inner_texts()).replace("\\n", " ")
     ok("分配后负荷跟着重算", "7.5 小时" in after_loads, after_loads)
 
+    # 拖动换时段：同一列里从「未安排」拖到「晚上」，日期不变、时段跟着变
+    # （之前只能拖到「某一天」，拖上去时段不变，看着像拖不动）
+    col3 = p.locator(".weekcol").nth(2)
+    chip3 = col3.locator(".wchip").first
+    grp = col3.locator(".wc-group").nth(2)          # 上午/下午/晚上 → 第 3 个是晚上
+    ok("日列里每个时段都是一块可放的地方", col3.locator(".wc-group").count() >= 3,
+       col3.locator(".wc-group").count())
+    p.evaluate("()=>{window.__calls.length=0;}")
+    gb = grp.bounding_box()
+    chip3.drag_to(grp, target_position={"x": 30, "y": max(6, gb["height"] - 4)})
+    p.wait_for_timeout(700)
+    moved = p.evaluate("()=>window.__calls.filter(c=>c[0]==='update').map(c=>c[1].patch)")
+    ok("拖到同一列的另一时段：日期和时段一起写",
+       len(moved) == 1 and moved[0].get("date") == "2026-10-21" and moved[0].get("slot") == "eve",
+       moved)
+
     # 在某天直接加一件事（＋ 按钮 → 小表单：标题 + 预计 + 开始）
     p.evaluate("()=>{window.__calls.length=0;}")
     p.locator(".weekcol").nth(0).locator(".wc-add").click()

@@ -357,6 +357,14 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
 .it-slot.empty span { color: var(--text-3); font-weight: 400; }
 .it-slot.empty::after { background: transparent; }
 
+/* 拖动落点：日列里按时段分成几块，每块都能接住 ——
+   同一列里换时段就靠这个（之前只能拖到「某一天」，拖上去时段不变，像拖不动） */
+.wc-group {
+  border-radius: 6px; min-height: 22px;
+  transition: background 0.12s;
+}
+.wc-group.over { background: var(--accent-soft); }
+
 /* 周程列里的时段隔断：列很窄，只能极小 */
 .wc-slot {
   display: flex; align-items: center; gap: 5px;

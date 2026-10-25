@@ -1480,5 +1480,14 @@ const todaySrc8 = readFileSync(new URL('../src/pages/Today.jsx', import.meta.url
 ok('「接下来」区块每行也有「待分配」',
   /移到今天<\/button>[\s\S]{0,200}?unassign\(it\)/.test(todaySrc8));
 
+console.log('\n[11.29] 周程里可以拖动换时段');
+ok('日列按时段分成了可放置的块（wc-group）',
+  weekSrc2.includes('wc-group') && weekSrc2.includes('dropToSlot'));
+ok('拖到某档里：日期和时段一起写',
+  weekSrc2.includes('patch: { date, slot }'));
+ok('落点有高亮（否则不知道会放到哪一档）', css.includes('.wc-group.over'));
+ok('时段块的 drop 不让列级再处理一次（避免写两遍）',
+  weekSrc2.includes('e.stopPropagation();          // 别让 weekcol'));
+
 console.log(`\n结果：${pass} 通过，${fail} 失败`);
 process.exit(fail ? 1 : 0);
