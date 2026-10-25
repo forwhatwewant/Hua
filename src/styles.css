@@ -240,6 +240,28 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   font-size: 11px; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums;
 }
 .back-when { font-size: 11.5px; color: var(--text-3); }
+
+/* 「前几天没做完的」：不是卡片，是一条很轻的行。
+   去掉白底和边框 —— 它是「要不要捡回来」的提醒，不该和今日事项抢注意力。
+   收起时不显示件数（JS 那边控制），那个数字每天累加，看着像欠债。 */
+.backsect.quiet {
+  background: none; border: none; border-radius: 0;
+  margin: 22px 0 4px; padding: 9px 0 0;
+  border-top: 1px dashed var(--line-2);
+}
+.backsect.quiet .backsect-head {
+  padding: 3px 12px; font-size: 12px; color: var(--text-3);
+}
+.backsect.quiet .backsect-head:hover { color: var(--text-2); }
+.backsect.quiet.open .backsect-head { color: var(--text-2); }
+.backsect.quiet .back-count {
+  background: none; min-width: 0; padding: 0;
+  color: var(--text-3); font-size: 11.5px; line-height: inherit;
+}
+.back-caret {
+  font-size: 9px; opacity: 0.7; width: 9px;
+  display: inline-block; text-align: center;
+}
 .backsect .items { gap: 0; }
 .backsect .item { padding: 6px 8px; }
 /* 遗留：多选 + 批量 */

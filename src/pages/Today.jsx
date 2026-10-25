@@ -543,79 +543,6 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
 
             <div className="pane-body pane-left">
               <div className="pane-scroll">
-              {/* 遗留：默认收起，只留一个入口（ADR-0008：不顺延，手动拉）。
-                  打开应用的第一眼应该是「今天」，而不是被前几天没做完的事占满。 */}
-              {boot.backlog.length > 0 && (
-                <div className="backsect">
-                  <button className="backsect-head" onClick={() => setShowBacklog((v) => !v)}>
-                    <span>前几天遗留</span>
-                    <span className="back-count">{boot.backlog.length}</span>
-                    <span className="grow" />
-                    <span className="chev">{showBacklog ? '收起' : '展开'}</span>
-                  </button>
-                  {showBacklog && (
-                    <>
-                      <div className="items">
-                        {boot.backlog.map((it) => (
-                          <div className={`item back${backSel.includes(it.id) ? ' sel' : ''}`} key={it.id}>
-                            <input
-                              type="checkbox"
-                              className="back-check"
-                              checked={backSel.includes(it.id)}
-                              onChange={() => toggleBack(it.id)}
-                              title="选中，之后可以一起处理"
-                            />
-                            <div>
-                              <div className="it-title">{it.title}</div>
-                              <div className="it-meta"><span>{it.date}</span></div>
-                            </div>
-                            <div className="it-actions" style={{ opacity: 1 }}>
-                              <button onClick={() => carryOne(it)}>移到今天</button>
-                              <button onClick={() => setCompleting(it)}>完成</button>
-                              <button className="del" onClick={() => setConfirming(it)}>删除</button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="backsect-foot backfoot">
-                        <label className="back-all">
-                          <input type="checkbox" checked={backAll} onChange={toggleBackAll} />
-                          全选
-                        </label>
-                        {backSel.length > 0 ? (
-                          <>
-                            <span className="back-selnum">已选 {backSel.length} 件</span>
-                            <button className="btn" style={{ padding: '4px 10px', fontSize: 12 }} onClick={bulkCarry}>
-                              移到今天
-                            </button>
-                            <button
-                              className="btn"
-                              style={{ padding: '4px 10px', fontSize: 12 }}
-                              onClick={() => { setBulkDoneDate(boot.today); setBulkDoneOpen(true); }}
-                            >
-                              完成
-                            </button>
-                            <button
-                              className="btn danger"
-                              style={{ padding: '4px 10px', fontSize: 12 }}
-                              onClick={() => setBulkConfirm(true)}
-                            >
-                              删除
-                            </button>
-                            <button className="btn" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setBackSel([])}>
-                              取消选择
-                            </button>
-                          </>
-                        ) : (
-                          <button className="btn" style={{ padding: '4px 10px', fontSize: 12 }} onClick={carryAll}>
-                            全部移到今天
-                          </button>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
 
               {/* 未来：同样是常驻区块，但默认收起 —— 今天才是主角，这里只做预告。
                   标题里带分布摘要，不展开也能一眼看到「明天有几件」。 */}
@@ -771,6 +698,83 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* 前几天没做完的：放在最下面，一条很轻的行。默认收起，**收起时不报件数**
+                  —— 那个数字每天累加会变成压力源，它不是账本，只是「要不要捡回来」的提醒
+                  （ADR-0008：不顺延，手动拉）。固定的不在这里：固定的不欠任何一天。 */}
+              {boot.backlog.length > 0 && (
+                <div className={`backsect quiet${showBacklog ? ' open' : ''}`}>
+                  <button className="backsect-head" onClick={() => setShowBacklog((v) => !v)}>
+                    <span className="back-caret">{showBacklog ? '▾' : '▸'}</span>
+                    <span>前几天没做完的</span>
+                    {/* 收起时不报件数 —— 那个数字每天累加，看着像欠债 */}
+                    {showBacklog && <span className="back-count">{boot.backlog.length}</span>}
+                    <span className="grow" />
+                    <span className="chev">{showBacklog ? '收起' : ''}</span>
+                  </button>
+                  {showBacklog && (
+                    <>
+                      <div className="items">
+                        {boot.backlog.map((it) => (
+                          <div className={`item back${backSel.includes(it.id) ? ' sel' : ''}`} key={it.id}>
+                            <input
+                              type="checkbox"
+                              className="back-check"
+                              checked={backSel.includes(it.id)}
+                              onChange={() => toggleBack(it.id)}
+                              title="选中，之后可以一起处理"
+                            />
+                            <div>
+                              <div className="it-title">{it.title}</div>
+                              <div className="it-meta"><span>{it.date}</span></div>
+                            </div>
+                            <div className="it-actions" style={{ opacity: 1 }}>
+                              <button onClick={() => carryOne(it)}>移到今天</button>
+                              <button onClick={() => setCompleting(it)}>完成</button>
+                              <button className="del" onClick={() => setConfirming(it)}>删除</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="backsect-foot backfoot">
+                        <label className="back-all">
+                          <input type="checkbox" checked={backAll} onChange={toggleBackAll} />
+                          全选
+                        </label>
+                        {backSel.length > 0 ? (
+                          <>
+                            <span className="back-selnum">已选 {backSel.length} 件</span>
+                            <button className="btn" style={{ padding: '4px 10px', fontSize: 12 }} onClick={bulkCarry}>
+                              移到今天
+                            </button>
+                            <button
+                              className="btn"
+                              style={{ padding: '4px 10px', fontSize: 12 }}
+                              onClick={() => { setBulkDoneDate(boot.today); setBulkDoneOpen(true); }}
+                            >
+                              完成
+                            </button>
+                            <button
+                              className="btn danger"
+                              style={{ padding: '4px 10px', fontSize: 12 }}
+                              onClick={() => setBulkConfirm(true)}
+                            >
+                              删除
+                            </button>
+                            <button className="btn" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setBackSel([])}>
+                              取消选择
+                            </button>
+                          </>
+                        ) : (
+                          <button className="btn" style={{ padding: '4px 10px', fontSize: 12 }} onClick={carryAll}>
+                            全部移到今天
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
               </div>{/* pane-scroll */}

@@ -216,12 +216,15 @@ const bootWithBacklog = {
 const todayHtml = renderToStaticMarkup(
   React.createElement(Today, { boot: bootWithBacklog, reload: () => {} })
 );
-ok('渲染出「前几天遗留」入口', todayHtml.includes('前几天遗留'));
-ok('入口带件数角标 2', /class="back-count"[^>]*>2</.test(todayHtml),
-  (todayHtml.match(/class="back-count"[^>]*>\d+</) || [])[0]);
+ok('渲染出「前几天没做完的」入口', todayHtml.includes('前几天没做完的'));
+// 收起时不报件数 —— 那个数字每天累加，看着像欠债（用户明确说会焦虑）
+ok('收起时不显示件数（不制造压力）',
+  !/class="back-count"[^>]*>\d+</.test(todayHtml),
+  (todayHtml.match(/class="back-count"[^>]*>[^<]*</) || [])[0]);
+ok('入口是淡色的一条，不是卡片', todayHtml.includes('backsect quiet'));
 ok('默认收起：不渲染遗留条目本身', !todayHtml.includes('搞卫生') && !todayHtml.includes('看椅子'));
 ok('默认收起：展开态才有的「全部移到今天」不出现', !todayHtml.includes('全部移到今天'));
-ok('收起时入口提示「展开」', todayHtml.includes('展开') && !todayHtml.includes('>收起<'));
+ok('收起时没有「展开」这种催促字样', !todayHtml.includes('>展开<'));
 
 console.log('\n[8] 今日页的日志入口：只给入口，正文不在今日页');
 const bootWithLog = {

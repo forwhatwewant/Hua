@@ -424,6 +424,28 @@ console.log("\n[data] 固定区（含今天）");
   fs.rmSync(d10, { recursive: true, force: true });
 }
 
+/* ---------- 5.10) 固定的不算「前几天没做完」 ---------- */
+console.log("\n[data] 固定的不进遗留");
+{
+  const d11 = tmpDir();
+  db.open(d11);
+  const T = '2026-10-25';
+  const a = db.createItem({ date: '2026-10-20', title: '过去的' });
+  const b = db.createItem({ date: '2026-10-20', title: '过去但固定的' });
+  db.pinItem(b.id, true);
+
+  const back = db.backlog(T).map((x) => x.title);
+  ok('普通的过去事项进遗留', back.includes('过去的'), JSON.stringify(back));
+  ok('固定的不进遗留（它不欠任何一天）', !back.includes('过去但固定的'), JSON.stringify(back));
+  ok('固定的仍在固定区里', db.pinnedItems().some((x) => x.id === b.id));
+
+  db.pinItem(b.id, false);
+  ok('取消固定后又回到遗留里', db.backlog(T).some((x) => x.id === b.id));
+
+  db.close();
+  fs.rmSync(d11, { recursive: true, force: true });
+}
+
 /* ---------- 6) 日纪的编辑记录：首次写于 / 最后改于 / 改过几次 ---------- */
 console.log('\n[data] 日纪的编辑记录（journal_meta）');
 {
