@@ -659,6 +659,13 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   border-left: 2px solid var(--warn);
 }
 .memorow.editing { border-left-color: var(--accent); }
+/* 备忘可以拖动排序：拖起来半透明，落点在目标行上画一条线 */
+.memorow.dragging { opacity: 0.4; }
+.memorow.dragover-before { box-shadow: inset 0 2px 0 var(--accent); }
+.memorow.dragover-after { box-shadow: inset 0 -2px 0 var(--accent); }
+/* 左边的花标当把手：抓它最直观（整行其实都能拖） */
+.memo-mark { cursor: grab; }
+.memorow.dragging .memo-mark { cursor: grabbing; }
 .memo-mark { flex: none; color: var(--warn); margin-top: 4px; }
 .memo-main { flex: 1; min-width: 0; cursor: text; }
 .memo-main:hover .memo-text { color: var(--accent); }

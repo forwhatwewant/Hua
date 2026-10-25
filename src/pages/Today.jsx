@@ -127,6 +127,11 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
   /* 正在就地改的那条备忘（点文字改）。null = 没有。 */
   const [memoEdit, setMemoEdit] = useState(null);   // { id, text, time, note }
   const memos = boot.memos || [];
+  /* 备忘的拖拽排序：一维列表，比事项简单 —— 不用管时段，只管落位。
+     顺序落在 memos.sort_key 上（db.reorderMemos），刷新后保持。 */
+  const [memoDragId, setMemoDragId] = useState(null);
+  const [memoOver, setMemoOver] = useState(null);   // { id, after }
+  const memoJustDragged = useRef(false);            // 刚拖完就别把那次 mouseup 当点击
   /* 固定区块里就地展开的那几条（日志用 date 做键，事项用 id）。
      固定区常常是「想起来才看一眼」，就地展开不用跳页、不丢上下文。 */
   const [expanded, setExpanded] = useState(() => new Set());
@@ -364,6 +369,42 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
     }
     setMemoEdit(null);
     reload();
+  };
+
+  /* 备忘拖拽：把拖动的那条插到目标的前/后，其余保持原顺序 */
+  const onMemoDragStart = (e, id) => {
+    e.dataTransfer.effectAllowed = 'move';
+    setMemoDragId(id);
+  };
+  const onMemoDragOver = (e, m) => {
+    if (!memoDragId || m.id === memoDragId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const r = e.currentTarget.getBoundingClientRect();
+    setMemoOver({ id: m.id, after: e.clientY > r.top + r.height / 2 });
+  };
+  const onMemoDrop = async (e, m) => {
+    e.preventDefault();
+    const src = memoDragId;
+    const insertAfter = memoOver?.after;
+    setMemoDragId(null);
+    setMemoOver(null);
+    if (!src || src === m.id) return;
+
+    const ids = memos.map((x) => x.id).filter((id) => id !== src);
+    const i = ids.indexOf(m.id);
+    if (i < 0) return;
+    ids.splice(insertAfter ? i + 1 : i, 0, src);
+
+    await window.hua.memos.reorder({ ids });
+    reload();
+  };
+  const onMemoDragEnd = () => {
+    setMemoDragId(null);
+    setMemoOver(null);
+    // 拖完浏览器常会补一个 click，别让它顺手把那条打开成编辑态
+    memoJustDragged.current = true;
+    setTimeout(() => { memoJustDragged.current = false; }, 200);
   };
 
   const snapshotNow = async () => {
@@ -797,7 +838,10 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
                 <div className="rec-head">
                   <h3>备忘{memos.length ? ` · ${memos.length}` : ''}</h3>
                   <span className="grow" />
-                  <span className="memo-hint">不绑日期，一直在</span>
+                  {/* 一条以上才提「可拖动」——一条的时候提它没意义 */}
+                  <span className="memo-hint">
+                    {memos.length > 1 ? '不绑日期 · 按住可拖动排序' : '不绑日期，一直在'}
+                  </span>
                 </div>
 
                 {memos.length > 0 && (
@@ -842,12 +886,29 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
                           <button className="refpinbtn" onClick={() => setMemoEdit(null)}>取消</button>
                         </div>
                       ) : (
-                        <div className="memorow" key={m.id}>
+                        <div
+                          className={
+                            'memorow' +
+                            (memoDragId === m.id ? ' dragging' : '') +
+                            (memoOver?.id === m.id
+                              ? (memoOver.after ? ' dragover-after' : ' dragover-before')
+                              : '')
+                          }
+                          key={m.id}
+                          draggable
+                          onDragStart={(e) => onMemoDragStart(e, m.id)}
+                          onDragOver={(e) => onMemoDragOver(e, m)}
+                          onDragEnd={onMemoDragEnd}
+                          onDrop={(e) => onMemoDrop(e, m)}
+                        >
                           <MemoMark />
                           <div
                             className="memo-main"
-                            title="点一下改"
-                            onClick={() => setMemoEdit({ id: m.id, text: m.text, time: m.time, note: m.note || '' })}
+                            title="点一下改；按住可以拖动排序"
+                            onClick={() => {
+                              if (memoJustDragged.current) return;   // 刚拖完，别当成点击
+                              setMemoEdit({ id: m.id, text: m.text, time: m.time, note: m.note || '' });
+                            }}
                           >
                             <div className="memo-line">
                               <span className="memo-text">{m.text}</span>
@@ -855,7 +916,14 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
                             </div>
                             {m.note && <div className="memo-note">{m.note}</div>}
                           </div>
-                          <button className="refpinbtn" title="删除这条备忘" onClick={() => removeMemo(m)}>删除</button>
+                          <button
+                            className="refpinbtn"
+                            draggable={false}
+                            title="删除这条备忘"
+                            onClick={() => removeMemo(m)}
+                          >
+                            删除
+                          </button>
                         </div>
                       )
                     ))}

@@ -1439,5 +1439,29 @@ ok('选中后注解显示时段名', todaySrc7.includes('SLOTS.find((s) => s.key
 ok('提交时带上 slot', todaySrc7.includes('slot: slot || null'));
 ok('记完把时段复位', todaySrc7.includes("setSlot('');"));
 
+console.log('\n[11.27] 备忘可以拖动排序');
+const memoList = [
+  { id: 101, text: '第一条', time: '09:00', note: '补充一句', sortKey: 1 },
+  { id: 102, text: '第二条', time: '', note: '', sortKey: 2 },
+];
+const memoDragHtml = renderToStaticMarkup(React.createElement(Today, {
+  boot: { ...bootWithBacklog, memos: memoList, items: [], backlog: [], unscheduled: [] },
+  reload: () => {}, onOpenLogAt: () => {},
+}));
+ok('每条备忘都是可拖的',
+  (memoDragHtml.match(/class="memorow" draggable="true"/g) || []).length === 2,
+  String((memoDragHtml.match(/class="memorow" draggable="true"/g) || []).length));
+ok('删除按钮不参与拖拽（draggable=false）',
+  (memoDragHtml.match(/draggable="false"/g) || []).length >= 2);
+ok('一条以上才提示可以拖', memoDragHtml.includes('按住可拖动排序'));
+ok('拖动结果交给 memos.reorder', todaySrc7.includes('window.hua.memos.reorder({ ids })'));
+ok('落位算法：先剔除自己，再插到目标前/后',
+  todaySrc7.includes("memos.map((x) => x.id).filter((id) => id !== src)")
+  && todaySrc7.includes('ids.splice(insertAfter ? i + 1 : i, 0, src)'));
+ok('拖完别把那次 mouseup 当成点击（会误开编辑）',
+  todaySrc7.includes('memoJustDragged.current'));
+ok('拖动时半透明、落点有线',
+  css.includes('.memorow.dragging') && css.includes('.memorow.dragover-after'));
+
 console.log(`\n结果：${pass} 通过，${fail} 失败`);
 process.exit(fail ? 1 : 0);

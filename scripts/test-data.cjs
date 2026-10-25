@@ -446,6 +446,33 @@ console.log("\n[data] 固定的不进遗留");
   fs.rmSync(d11, { recursive: true, force: true });
 }
 
+/* ---------- 5.11) 备忘可以调顺序 ---------- */
+console.log("\n[data] 备忘排序");
+{
+  const d12 = tmpDir();
+  db.open(d12);
+  const a = db.createMemo({ text: '第一条', time: '', note: '' });
+  const b = db.createMemo({ text: '第二条', time: '', note: '' });
+  const c = db.createMemo({ text: '第三条', time: '', note: '' });
+
+  const order = () => db.listMemos().map((x) => x.text).join(',');
+  ok('新建的按添加顺序排', order() === '第一条,第二条,第三条', order());
+
+  db.reorderMemos([c.id, a.id, b.id]);
+  ok('按传进来的 ids 落 sort_key', order() === '第三条,第一条,第二条', order());
+
+  db.reorderMemos([b.id, c.id, a.id]);
+  ok('再调一次也对（不是只能调一次）', order() === '第二条,第三条,第一条', order());
+
+  db.close();
+  db.open(d12);
+  ok('关库重开顺序还在', db.listMemos().map((x) => x.text).join(',') === '第二条,第三条,第一条',
+    db.listMemos().map((x) => x.text).join(','));
+
+  db.close();
+  fs.rmSync(d12, { recursive: true, force: true });
+}
+
 /* ---------- 6) 日纪的编辑记录：首次写于 / 最后改于 / 改过几次 ---------- */
 console.log('\n[data] 日纪的编辑记录（journal_meta）');
 {
