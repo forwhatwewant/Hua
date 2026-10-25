@@ -15,7 +15,7 @@ import { rateText } from '../src/rate.js';
 import { daySpan, fmtWhen, nightLabel } from '../src/dates.js';
 import { slotOf } from '../src/slot.js';
 import { readFileSync } from 'node:fs';
-import Log, { excerpt, countWords, saveLabel } from '../src/pages/Log.jsx';
+import Log, { excerpt, countWords, saveLabel, weekStartOf, groupOf } from '../src/pages/Log.jsx';
 import Settings from '../src/pages/Settings.jsx';
 import DayBanner from '../src/components/DayBanner.jsx';
 import EditItemModal from '../src/components/EditItemModal.jsx';
@@ -1488,6 +1488,35 @@ ok('拖到某档里：日期和时段一起写',
 ok('落点有高亮（否则不知道会放到哪一档）', css.includes('.wc-group.over'));
 ok('时段块的 drop 不让列级再处理一次（避免写两遍）',
   weekSrc2.includes('e.stopPropagation();          // 别让 weekcol'));
+
+console.log('\n[11.30] 日纪侧栏按时间分组（本周 / 上周 / 按月）');
+// 2026-10-26 是周一，本周 = 10/26–11/01
+ok('今天 → 本周', groupOf('2026-10-26', '2026-10-26').label === '本周',
+  groupOf('2026-10-26', '2026-10-26').label);
+ok('同一周的周四也算本周', groupOf('2026-10-29', '2026-10-26').label === '本周');
+ok('上周日（10/25）归到上周，不算本周', groupOf('2026-10-25', '2026-10-26').label === '上周',
+  groupOf('2026-10-25', '2026-10-26').label);
+ok('上周一（10/19）→ 上周', groupOf('2026-10-19', '2026-10-26').label === '上周');
+ok('再往前一周（10/18）→ 按月', groupOf('2026-10-18', '2026-10-26').label === '10 月',
+  groupOf('2026-10-18', '2026-10-26').label);
+ok('上个月 → 9 月', groupOf('2026-09-28', '2026-10-26').label === '9 月');
+ok('跨年要带年份', groupOf('2025-12-20', '2026-10-26').label === '2025 年 12 月',
+  groupOf('2025-12-20', '2026-10-26').label);
+ok('weekStartOf 把周日算进前一个周一', weekStartOf('2026-10-25') === '2026-10-19',
+  weekStartOf('2026-10-25'));
+ok('weekStartOf 对周一是它自己', weekStartOf('2026-10-19') === '2026-10-19');
+ok('同一个月同一年 → 同一个 key（会归到一组）',
+  groupOf('2026-09-02', '2026-10-26').key === groupOf('2026-09-28', '2026-10-26').key);
+ok('本周和上周不是同一个 key',
+  groupOf('2026-10-26', '2026-10-26').key !== groupOf('2026-10-19', '2026-10-26').key);
+
+const logSrc3 = readFileSync(new URL('../src/pages/Log.jsx', import.meta.url), 'utf8');
+ok('侧栏按分组渲染（loggroup）',
+  logSrc3.includes('dayGroups') && logSrc3.includes('loggroup-label'));
+ok('组标题右边标篇数', logSrc3.includes('loggroup-n') && logSrc3.includes('{g.written} 篇'));
+ok('分组样式：小字 + 细线，不做成标题',
+  blockOf('.loggroup {').includes('font-size: 11px')
+  && blockOf('.loggroup::after').includes('var(--line-2)'));
 
 console.log(`\n结果：${pass} 通过，${fail} 失败`);
 process.exit(fail ? 1 : 0);
