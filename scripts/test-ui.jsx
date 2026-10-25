@@ -1463,5 +1463,22 @@ ok('拖完别把那次 mouseup 当成点击（会误开编辑）',
 ok('拖动时半透明、落点有线',
   css.includes('.memorow.dragging') && css.includes('.memorow.dragover-after'));
 
+console.log('\n[11.28] 清空日期 = 待分配，不能被「还原」');
+const editSrc3 = readFileSync(new URL('../src/components/EditItemModal.jsx', import.meta.url), 'utf8');
+// 空字符串是假值：写 `date || item.date` 会把用户清空的日期还原回去，
+// 表现就是「改成待分配，但还是不变」（用户报过）。
+// 注释里提到这个写法是当反面教材，所以只看「赋值语句」那行
+ok('保存时 date 直接用，不回退到原日期',
+  editSrc3.split(String.fromCharCode(10)).some((l) => l.trim() === 'date,')
+  && !editSrc3.includes('date: date ||') && !editSrc3.includes('date: date ??'));
+ok('留空时有「这就是待分配」的提示', editSrc3.includes('留空就是「待分配」'));
+const weekSrc2 = readFileSync(new URL('../src/pages/Week.jsx', import.meta.url), 'utf8');
+ok('周程的「退回待分配」是真的清空日期（不是挪到今天）',
+  weekSrc2.includes("patch: { date: '' }") && !weekSrc2.includes("carry({ ids: [it.id], date: board.today })"));
+ok('周程的 × 提示写对了', weekSrc2.includes('不属任何一天'));
+const todaySrc8 = readFileSync(new URL('../src/pages/Today.jsx', import.meta.url), 'utf8');
+ok('「接下来」区块每行也有「待分配」',
+  /移到今天<\/button>[\s\S]{0,200}?unassign\(it\)/.test(todaySrc8));
+
 console.log(`\n结果：${pass} 通过，${fail} 失败`);
 process.exit(fail ? 1 : 0);

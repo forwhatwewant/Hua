@@ -34,7 +34,10 @@ export default function EditItemModal({ item, onClose, onSaved }) {
       id: item.id,
       patch: {
         title: t,
-        date: date || item.date,
+        // 留空 = 待分配（date = ''）。
+        // **不能写成 `date || item.date`** —— 空字符串是假值，会被还原成原日期，
+        // 用户清空日期后看着「改了没反应」（踩过：明天的事项改不成待分配）。
+        date,
         estMinutes: est === '' || est === null ? null : Number(est),
         startTime: start || null,
         note: note.trim(),

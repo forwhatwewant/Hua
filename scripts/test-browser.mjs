@@ -141,6 +141,7 @@ const sortMemos = () => {
 window.hua = {
   bootstrap: () => Promise.resolve({}), onDataChanged: () => {},
   items: { create:(p)=>{ calls.push(['create', p]); return Promise.resolve(); }, carry:()=>Promise.resolve(), reopen:()=>Promise.resolve(),
+    update:(p)=>{ calls.push(['update', p]); return Promise.resolve(); },
     drop:()=>Promise.resolve(), remove:()=>Promise.resolve(), reorder:()=>Promise.resolve(),
     pin:()=>Promise.resolve(), range:()=>Promise.resolve([]) },
   journal: { snapshot: ()=>Promise.resolve({count:0}) },
@@ -228,6 +229,7 @@ window.hua = {
     carry: (p) => { calls.push(['carry', p]); items = items.map(it => p.ids.includes(it.id) ? {...it, date:p.date} : it); return Promise.resolve([]); },
     create: (p) => { calls.push(['create', p]); items = [...items, { id: nextId++, date:p.date, title:p.title, status:'todo', estMinutes:null, actualMinutes:null, tags:[] }]; return Promise.resolve({}); },
     complete: (p) => { calls.push(['complete', p]); return Promise.resolve({}); },
+    update: (p) => { calls.push(['update', p]); items = items.map(it => it.id === p.id ? {...it, ...p.patch} : it); return Promise.resolve({}); },
   },
 };
 function Shell(){
@@ -618,12 +620,14 @@ with sync_playwright() as pw:
        created == [["周一新加的事", "2026-10-19", 45, "09:30"]], created)
     ok("加完表单收起", p.locator(".wkadd").count() == 0)
 
-    # 退回待分配：把周一的已完成那条退回 → carry 到今天
+    # 退回待分配：把周一那条从这天拿掉 → 日期清空（不是挪到今天）
     p.evaluate("()=>{window.__calls.length=0;}")
+    p.wait_for_timeout(400)
     p.locator(".weekcol").nth(0).locator(".wchip-x").first.click()
     p.wait_for_timeout(600)
-    back = p.evaluate("()=>window.__calls.filter(c=>c[0]==='carry').map(c=>c[1].date)")
-    ok("退回待分配 = 放回今天", back == ["2026-10-16"], back)
+    back = p.evaluate("()=>window.__calls.filter(c=>c[0]==='update').map(c=>c[1].patch.date)")
+    allcalls = p.evaluate("()=>JSON.stringify(window.__calls)")
+    ok("退回待分配 = 把日期清空，落到池子里", back == [""], "back=" + str(back) + " all=" + allcalls)
 
     # ---- 右键：在某天加事 ----
     p.evaluate("()=>{window.__calls.length=0;}")

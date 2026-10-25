@@ -621,6 +621,9 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
                                 </div>
                                 <div className="it-actions" style={{ opacity: 1 }}>
                                   <button onClick={() => bringToToday(it)}>移到今天</button>
+                                  {/* 未来事项也要能直接退回待分配 —— 之前只有「改期」，
+                                      想改成「先不定哪天」得点开弹框，还撞上过清空日期不生效的 bug */}
+                                  <button onClick={() => unassign(it)} title="先不定哪天做，放进待分配">待分配</button>
                                   <button onClick={() => setEditing(it)}>改期</button>
                                   <button className="del" onClick={() => setConfirming(it)}>删除</button>
                                 </div>

@@ -126,8 +126,11 @@ export default function Week({ boot, reload }) {
 
   /* 退回待分配：把日期放回今天，它就会重新出现在池子里。
      不用「删除」—— 那太狠了；这里只是「这周先不排」。 */
+  /* 「从这天拿掉」= 退回待分配（date = ''，不属于任何一天），落到池子的「待分配」里。
+     之前这里写的是 carry({ date: today })，和按钮提示「退回待分配」不符 ——
+     用户从周程里点掉明天那条，结果它跑到今天，看着像没生效。 */
   const unschedule = async (it) => {
-    await window.hua.items.carry({ ids: [it.id], date: board.today });
+    await window.hua.items.update({ id: it.id, patch: { date: '' } });
     await refresh();
   };
 
@@ -321,7 +324,7 @@ export default function Week({ boot, reload }) {
                         <button
                           className="wchip-x"
                           draggable={false}
-                          title="退回待分配（放回今天）"
+                          title="退回待分配（不属任何一天，落到下面的池子里）"
                           onClick={(e) => { e.stopPropagation(); unschedule(it); }}
                         >
                           ×
