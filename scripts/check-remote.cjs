@@ -75,6 +75,7 @@ function scanByClone({ owner, repo }) {
     const commits = git(['rev-list', '--all']).split('\n').filter(Boolean);
     const hits = [];
     const seen = new Set();      // blob sha 去重：同一份内容只扫一次
+    const paths = new Set();     // 历史上出现过的所有路径（查数据文件用）
 
     for (const sha of commits) {
       const tree = git(['ls-tree', '-r', sha]);      // "<mode> blob <sha>\t<path>"
@@ -83,6 +84,7 @@ function scanByClone({ owner, repo }) {
         const m = line.match(/^\d+ blob ([0-9a-f]+)\t(.+)$/);
         if (!m) continue;
         const [, blobSha, rel] = m;
+        paths.add(rel);
         if (!shouldScan(rel)) continue;
         const key = `${blobSha}\u0000${rel}`;
         if (seen.has(key)) continue;
@@ -94,7 +96,7 @@ function scanByClone({ owner, repo }) {
       }
     }
 
-    return { via: 'clone', branches, commits: commits.length, blobs: seen.size, hits };
+    return { via: 'clone', branches, commits: commits.length, blobs: seen.size, hits, paths };
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -120,6 +122,7 @@ function scanByApi({ owner, repo }) {
 
   const hits = [];
   const seenBlob = new Set();
+  const paths = new Set();
   const seenCommit = new Set();
   let commitCount = 0;
 
@@ -148,6 +151,7 @@ function scanByApi({ owner, repo }) {
 
       for (const e of tree.tree) {
         if (e.type !== 'blob') continue;
+        paths.add(e.path);
         if (!shouldScan(e.path)) continue;
         const key = `${e.sha}\u0000${e.path}`;
         if (seenBlob.has(key)) continue;
@@ -161,7 +165,7 @@ function scanByApi({ owner, repo }) {
     }
   }
 
-  return { via: 'api', branches: branches.map((b) => b.name), commits: commitCount, blobs: seenBlob.size, hits };
+  return { via: 'api', branches: branches.map((b) => b.name), commits: commitCount, blobs: seenBlob.size, hits, paths };
 }
 
 /* ---------- 跑 ---------- */
@@ -199,12 +203,27 @@ if (!result) {
 console.log(`[remote] 分支 ${result.branches.length} 个：${result.branches.join(', ')}`);
 console.log(`[remote] 提交 ${result.commits} 个，扫了 ${result.blobs} 份文件内容`);
 
-if (result.hits.length === 0) {
+/* 数据文件（.db / journal/ / reports/）永远不该进仓库 —— 那里面是真实记录 */
+const DATA_RE = /\.db(-wal|-shm)?$|^journal\/|^reports\//;
+const dataFiles = [...(result.paths || [])].filter((p) => DATA_RE.test(p));
+
+if (result.hits.length === 0 && dataFiles.length === 0) {
   console.log('  ok   远端历史里没有私人路径 / 用户名 / 真实邮箱');
+  console.log(`  ok   远端历史里没有数据文件（查了 ${(result.paths || []).size} 个路径）`);
   process.exit(0);
 }
 
-report(result.hits, { scope: `远端 ${result.commits} 个提交` });
-console.log('  这条已经在远端了。重写历史不够 —— 要么删库重建，要么把仓库改私有。');
+if (dataFiles.length > 0) {
+  console.log('');
+  console.log('  FAIL 远端历史里有数据文件：');
+  console.log('');
+  for (const f of dataFiles.slice(0, 20)) console.log(`    ${f}`);
+  if (dataFiles.length > 20) console.log(`    ……还有 ${dataFiles.length - 20} 个`);
+  console.log('');
+}
+
+if (result.hits.length > 0) report(result.hits, { scope: `远端 ${result.commits} 个提交` });
+
+console.log('  这些东西已经在远端了。重写历史不够 —— 要么删库重建，要么把仓库改私有。');
 console.log('');
 process.exit(1);
