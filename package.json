@@ -11,6 +11,8 @@
     "app": "vite build && electron .",
     "test": "node scripts/check-leaks.cjs && node scripts/smoke.cjs && node scripts/test-md.mjs && node scripts/test-data.cjs && node scripts/run-ui-test.mjs && node scripts/test-browser.mjs",
     "test:leaks": "node scripts/check-leaks.cjs",
+    "test:remote": "node scripts/check-remote.cjs",
+    "test:all": "npm test && npm run test:remote",
     "hooks:install": "git config core.hooksPath .githooks",
     "test:ui": "node scripts/run-ui-test.mjs",
     "test:data": "node scripts/test-data.cjs",

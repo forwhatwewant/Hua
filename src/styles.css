@@ -240,6 +240,28 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   font-size: 11px; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums;
 }
 .back-when { font-size: 11.5px; color: var(--text-3); }
+
+/* 「前几天没做完的」：不是卡片，是一条很轻的行。
+   去掉白底和边框 —— 它是「要不要捡回来」的提醒，不该和今日事项抢注意力。
+   收起时不显示件数（JS 那边控制），那个数字每天累加，看着像欠债。 */
+.backsect.quiet {
+  background: none; border: none; border-radius: 0;
+  margin: 22px 0 4px; padding: 9px 0 0;
+  border-top: 1px dashed var(--line-2);
+}
+.backsect.quiet .backsect-head {
+  padding: 3px 12px; font-size: 12px; color: var(--text-3);
+}
+.backsect.quiet .backsect-head:hover { color: var(--text-2); }
+.backsect.quiet.open .backsect-head { color: var(--text-2); }
+.backsect.quiet .back-count {
+  background: none; min-width: 0; padding: 0;
+  color: var(--text-3); font-size: 11.5px; line-height: inherit;
+}
+.back-caret {
+  font-size: 9px; opacity: 0.7; width: 9px;
+  display: inline-block; text-align: center;
+}
 .backsect .items { gap: 0; }
 .backsect .item { padding: 6px 8px; }
 /* 遗留：多选 + 批量 */
@@ -330,6 +352,18 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
 }
 /* 「未安排」那一段更淡，它只是个兜底 */
 .it-slot.none span { color: var(--text-3); font-weight: 400; }
+/* 空档：只留一行很淡的小字，不画线 —— 它是骨架，不是内容 */
+.it-slot.empty { margin: 11px 0 1px; }
+.it-slot.empty span { color: var(--text-3); font-weight: 400; }
+.it-slot.empty::after { background: transparent; }
+
+/* 拖动落点：日列里按时段分成几块，每块都能接住 ——
+   同一列里换时段就靠这个（之前只能拖到「某一天」，拖上去时段不变，像拖不动） */
+.wc-group {
+  border-radius: 6px; min-height: 22px;
+  transition: background 0.12s;
+}
+.wc-group.over { background: var(--accent-soft); }
 
 /* 周程列里的时段隔断：列很窄，只能极小 */
 .wc-slot {
@@ -339,6 +373,9 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
 }
 .wc-slot::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 .wc-slot.none { color: var(--text-3); opacity: 0.7; }
+/* 空档：更淡、不画线，只留一个词，七列的分段仍对齐 */
+.wc-slot.empty { opacity: 0.42; margin: 5px 0 2px; }
+.wc-slot.empty::after { background: transparent; }
 
 /* 修改弹框里的时段选择 */
 .slotpick { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -630,6 +667,13 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   border-left: 2px solid var(--warn);
 }
 .memorow.editing { border-left-color: var(--accent); }
+/* 备忘可以拖动排序：拖起来半透明，落点在目标行上画一条线 */
+.memorow.dragging { opacity: 0.4; }
+.memorow.dragover-before { box-shadow: inset 0 2px 0 var(--accent); }
+.memorow.dragover-after { box-shadow: inset 0 -2px 0 var(--accent); }
+/* 左边的花标当把手：抓它最直观（整行其实都能拖） */
+.memo-mark { cursor: grab; }
+.memorow.dragging .memo-mark { cursor: grabbing; }
 .memo-mark { flex: none; color: var(--warn); margin-top: 4px; }
 .memo-main { flex: 1; min-width: 0; cursor: text; }
 .memo-main:hover .memo-text { color: var(--accent); }
@@ -1211,6 +1255,21 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   min-height: 0; overflow: auto;
   padding-right: 2px;
 }
+/* 侧栏的时间分组（本周 / 上周 / 10 月）：一行小字 + 一条细线，
+   给一长串日期一个可以落脚的锚点。不是标题，别做重。 */
+.loggroup {
+  display: flex; align-items: center; gap: 6px;
+  margin: 11px 0 3px; padding: 0 9px;
+  font-size: 11px; color: var(--text-3); letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.loggroup:first-child { margin-top: 1px; }
+.loggroup-label { flex: none; }
+.loggroup-n { flex: none; font-size: 10.5px; opacity: 0.75; }
+.loggroup::after {
+  content: ''; flex: 1; height: 1px; background: var(--line-2);
+}
+
 .logday {
   display: flex; flex-direction: column; gap: 1px; width: 100%;
   border: none; background: none; cursor: pointer; text-align: left;

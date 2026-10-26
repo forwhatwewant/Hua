@@ -15,7 +15,7 @@ import { rateText } from '../src/rate.js';
 import { daySpan, fmtWhen, nightLabel } from '../src/dates.js';
 import { slotOf } from '../src/slot.js';
 import { readFileSync } from 'node:fs';
-import Log, { excerpt, countWords, saveLabel } from '../src/pages/Log.jsx';
+import Log, { excerpt, countWords, saveLabel, weekStartOf, groupOf } from '../src/pages/Log.jsx';
 import Settings from '../src/pages/Settings.jsx';
 import DayBanner from '../src/components/DayBanner.jsx';
 import EditItemModal from '../src/components/EditItemModal.jsx';
@@ -216,12 +216,15 @@ const bootWithBacklog = {
 const todayHtml = renderToStaticMarkup(
   React.createElement(Today, { boot: bootWithBacklog, reload: () => {} })
 );
-ok('渲染出「前几天遗留」入口', todayHtml.includes('前几天遗留'));
-ok('入口带件数角标 2', /class="back-count"[^>]*>2</.test(todayHtml),
-  (todayHtml.match(/class="back-count"[^>]*>\d+</) || [])[0]);
+ok('渲染出「前几天没做完的」入口', todayHtml.includes('前几天没做完的'));
+// 收起时不报件数 —— 那个数字每天累加，看着像欠债（用户明确说会焦虑）
+ok('收起时不显示件数（不制造压力）',
+  !/class="back-count"[^>]*>\d+</.test(todayHtml),
+  (todayHtml.match(/class="back-count"[^>]*>[^<]*</) || [])[0]);
+ok('入口是淡色的一条，不是卡片', todayHtml.includes('backsect quiet'));
 ok('默认收起：不渲染遗留条目本身', !todayHtml.includes('搞卫生') && !todayHtml.includes('看椅子'));
 ok('默认收起：展开态才有的「全部移到今天」不出现', !todayHtml.includes('全部移到今天'));
-ok('收起时入口提示「展开」', todayHtml.includes('展开') && !todayHtml.includes('>收起<'));
+ok('收起时没有「展开」这种催促字样', !todayHtml.includes('>展开<'));
 
 console.log('\n[8] 今日页的日志入口：只给入口，正文不在今日页');
 const bootWithLog = {
@@ -1272,7 +1275,23 @@ const noSlotHtml = renderToStaticMarkup(React.createElement(Today, {
   boot: { ...bootWithBacklog, memos: [], backlog: [], items: [{ ...noteItem, slot: '', startTime: null }] },
   reload: () => {}, onOpenLogAt: () => {},
 }));
-ok('一个时段都没指定时不画隔断（不凭空多出三条线）', !noSlotHtml.includes('it-slot'));
+// 反过来了：骨架要一直在。之前「一条都没指定就整块不画」，
+// 用户看到的就是「日程没有早中晚」。
+// 三档骨架 + 一条落在「未安排」里 → 4 个隔断，其中 3 个是空档
+ok('一条都没指定时三档骨架照样在（上午/下午/晚上）',
+  noSlotHtml.includes('>上午<') && noSlotHtml.includes('>下午<') && noSlotHtml.includes('>晚上<'),
+  (noSlotHtml.match(/>上午<|>下午<|>晚上</g) || []).join(' '));
+ok('三个空档都标了 empty（不画线、更淡）',
+  (noSlotHtml.match(/it-slot empty/g) || []).length === 3,
+  String((noSlotHtml.match(/it-slot empty/g) || []).length));
+ok('有内容的那条落在「未安排」里', noSlotHtml.includes('>未安排<'));
+
+// 没有「未安排」内容时，它那一档不画（它不是一天里的某一段）
+const slotOnlyHtml = renderToStaticMarkup(React.createElement(Today, {
+  boot: { ...bootWithBacklog, memos: [], backlog: [], items: [{ ...noteItem, slot: 'am', startTime: null }] },
+  reload: () => {}, onOpenLogAt: () => {},
+}));
+ok('全部排进时段后，「未安排」那一档不出现', !slotOnlyHtml.includes('>未安排<'));
 
 const modalSlotHtml = renderToStaticMarkup(React.createElement(EditItemModal, {
   item: { ...noteItem, slot: 'pm' }, allTags: [], onClose: () => {}, onSaved: () => {},
@@ -1360,8 +1379,10 @@ ok('周程的日列也按时段分组',
   weekSrc.includes('groupBySlot(items)') && weekSrc.includes('wc-slot'));
 ok('周程列里的隔断很小（10px，列太窄）',
   blockOf('.wc-slot {').includes('font-size: 10px'));
-ok('周程列里一个时段都没指定时不画隔断',
-  weekSrc.includes("items.some((x) => slotOf(x) !== '')"));
+ok('周程列里三档也一直画（空档更淡），七列骨架一致',
+  weekSrc.includes('wc-slot') && weekSrc.includes('empty')
+  && !weekSrc.includes("items.some((x) => slotOf(x) !== '')"));
+ok('周程空档有专门样式', css.includes('.wc-slot.empty'));
 
 console.log('\n[11.23] 录入时就能选「待分配」');
 const todaySrc6 = readFileSync(new URL('../src/pages/Today.jsx', import.meta.url), 'utf8');
@@ -1408,6 +1429,94 @@ const editSrc2 = readFileSync(new URL('../src/components/EditItemModal.jsx', imp
 ok('修改弹框里日期留空有提示', editSrc2.includes('留空就是「待分配」'));
 ok('修改弹框里有说明框', editSrc2.includes('说明 / 补充'));
 ok('修改弹框里有预计耗时', editSrc2.includes('预计耗时（分钟）'));
+
+console.log('\n[11.26] 录入时就能选时段（上午/下午/晚上）');
+const todaySrc7 = readFileSync(new URL('../src/pages/Today.jsx', import.meta.url), 'utf8');
+ok('录入框有「时段」注解', todaySrc7.includes("'时段'") && todaySrc7.includes('setSlotPick'));
+ok('弹层里是上午/下午/晚上 + 不指定',
+  todaySrc7.includes('SLOTS.map') && todaySrc7.includes('不指定'));
+ok('选中后注解显示时段名', todaySrc7.includes('SLOTS.find((s) => s.key === slot)'));
+ok('提交时带上 slot', todaySrc7.includes('slot: slot || null'));
+ok('记完把时段复位', todaySrc7.includes("setSlot('');"));
+
+console.log('\n[11.27] 备忘可以拖动排序');
+const memoList = [
+  { id: 101, text: '第一条', time: '09:00', note: '补充一句', sortKey: 1 },
+  { id: 102, text: '第二条', time: '', note: '', sortKey: 2 },
+];
+const memoDragHtml = renderToStaticMarkup(React.createElement(Today, {
+  boot: { ...bootWithBacklog, memos: memoList, items: [], backlog: [], unscheduled: [] },
+  reload: () => {}, onOpenLogAt: () => {},
+}));
+ok('每条备忘都是可拖的',
+  (memoDragHtml.match(/class="memorow" draggable="true"/g) || []).length === 2,
+  String((memoDragHtml.match(/class="memorow" draggable="true"/g) || []).length));
+ok('删除按钮不参与拖拽（draggable=false）',
+  (memoDragHtml.match(/draggable="false"/g) || []).length >= 2);
+ok('一条以上才提示可以拖', memoDragHtml.includes('按住可拖动排序'));
+ok('拖动结果交给 memos.reorder', todaySrc7.includes('window.hua.memos.reorder({ ids })'));
+ok('落位算法：先剔除自己，再插到目标前/后',
+  todaySrc7.includes("memos.map((x) => x.id).filter((id) => id !== src)")
+  && todaySrc7.includes('ids.splice(insertAfter ? i + 1 : i, 0, src)'));
+ok('拖完别把那次 mouseup 当成点击（会误开编辑）',
+  todaySrc7.includes('memoJustDragged.current'));
+ok('拖动时半透明、落点有线',
+  css.includes('.memorow.dragging') && css.includes('.memorow.dragover-after'));
+
+console.log('\n[11.28] 清空日期 = 待分配，不能被「还原」');
+const editSrc3 = readFileSync(new URL('../src/components/EditItemModal.jsx', import.meta.url), 'utf8');
+// 空字符串是假值：写 `date || item.date` 会把用户清空的日期还原回去，
+// 表现就是「改成待分配，但还是不变」（用户报过）。
+// 注释里提到这个写法是当反面教材，所以只看「赋值语句」那行
+ok('保存时 date 直接用，不回退到原日期',
+  editSrc3.split(String.fromCharCode(10)).some((l) => l.trim() === 'date,')
+  && !editSrc3.includes('date: date ||') && !editSrc3.includes('date: date ??'));
+ok('留空时有「这就是待分配」的提示', editSrc3.includes('留空就是「待分配」'));
+const weekSrc2 = readFileSync(new URL('../src/pages/Week.jsx', import.meta.url), 'utf8');
+ok('周程的「退回待分配」是真的清空日期（不是挪到今天）',
+  weekSrc2.includes("patch: { date: '' }") && !weekSrc2.includes("carry({ ids: [it.id], date: board.today })"));
+ok('周程的 × 提示写对了', weekSrc2.includes('不属任何一天'));
+const todaySrc8 = readFileSync(new URL('../src/pages/Today.jsx', import.meta.url), 'utf8');
+ok('「接下来」区块每行也有「待分配」',
+  /移到今天<\/button>[\s\S]{0,200}?unassign\(it\)/.test(todaySrc8));
+
+console.log('\n[11.29] 周程里可以拖动换时段');
+ok('日列按时段分成了可放置的块（wc-group）',
+  weekSrc2.includes('wc-group') && weekSrc2.includes('dropToSlot'));
+ok('拖到某档里：日期和时段一起写',
+  weekSrc2.includes('patch: { date, slot }'));
+ok('落点有高亮（否则不知道会放到哪一档）', css.includes('.wc-group.over'));
+ok('时段块的 drop 不让列级再处理一次（避免写两遍）',
+  weekSrc2.includes('e.stopPropagation();          // 别让 weekcol'));
+
+console.log('\n[11.30] 日纪侧栏按时间分组（本周 / 上周 / 按月）');
+// 2026-10-26 是周一，本周 = 10/26–11/01
+ok('今天 → 本周', groupOf('2026-10-26', '2026-10-26').label === '本周',
+  groupOf('2026-10-26', '2026-10-26').label);
+ok('同一周的周四也算本周', groupOf('2026-10-29', '2026-10-26').label === '本周');
+ok('上周日（10/25）归到上周，不算本周', groupOf('2026-10-25', '2026-10-26').label === '上周',
+  groupOf('2026-10-25', '2026-10-26').label);
+ok('上周一（10/19）→ 上周', groupOf('2026-10-19', '2026-10-26').label === '上周');
+ok('再往前一周（10/18）→ 按月', groupOf('2026-10-18', '2026-10-26').label === '10 月',
+  groupOf('2026-10-18', '2026-10-26').label);
+ok('上个月 → 9 月', groupOf('2026-09-28', '2026-10-26').label === '9 月');
+ok('跨年要带年份', groupOf('2025-12-20', '2026-10-26').label === '2025 年 12 月',
+  groupOf('2025-12-20', '2026-10-26').label);
+ok('weekStartOf 把周日算进前一个周一', weekStartOf('2026-10-25') === '2026-10-19',
+  weekStartOf('2026-10-25'));
+ok('weekStartOf 对周一是它自己', weekStartOf('2026-10-19') === '2026-10-19');
+ok('同一个月同一年 → 同一个 key（会归到一组）',
+  groupOf('2026-09-02', '2026-10-26').key === groupOf('2026-09-28', '2026-10-26').key);
+ok('本周和上周不是同一个 key',
+  groupOf('2026-10-26', '2026-10-26').key !== groupOf('2026-10-19', '2026-10-26').key);
+
+const logSrc3 = readFileSync(new URL('../src/pages/Log.jsx', import.meta.url), 'utf8');
+ok('侧栏按分组渲染（loggroup）',
+  logSrc3.includes('dayGroups') && logSrc3.includes('loggroup-label'));
+ok('组标题右边标篇数', logSrc3.includes('loggroup-n') && logSrc3.includes('{g.written} 篇'));
+ok('分组样式：小字 + 细线，不做成标题',
+  blockOf('.loggroup {').includes('font-size: 11px')
+  && blockOf('.loggroup::after').includes('var(--line-2)'));
 
 console.log(`\n结果：${pass} 通过，${fail} 失败`);
 process.exit(fail ? 1 : 0);

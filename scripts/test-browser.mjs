@@ -141,6 +141,7 @@ const sortMemos = () => {
 window.hua = {
   bootstrap: () => Promise.resolve({}), onDataChanged: () => {},
   items: { create:(p)=>{ calls.push(['create', p]); return Promise.resolve(); }, carry:()=>Promise.resolve(), reopen:()=>Promise.resolve(),
+    update:(p)=>{ calls.push(['update', p]); return Promise.resolve(); },
     drop:()=>Promise.resolve(), remove:()=>Promise.resolve(), reorder:()=>Promise.resolve(),
     pin:()=>Promise.resolve(), range:()=>Promise.resolve([]) },
   journal: { snapshot: ()=>Promise.resolve({count:0}) },
@@ -228,6 +229,7 @@ window.hua = {
     carry: (p) => { calls.push(['carry', p]); items = items.map(it => p.ids.includes(it.id) ? {...it, date:p.date} : it); return Promise.resolve([]); },
     create: (p) => { calls.push(['create', p]); items = [...items, { id: nextId++, date:p.date, title:p.title, status:'todo', estMinutes:null, actualMinutes:null, tags:[] }]; return Promise.resolve({}); },
     complete: (p) => { calls.push(['complete', p]); return Promise.resolve({}); },
+    update: (p) => { calls.push(['update', p]); items = items.map(it => it.id === p.id ? {...it, ...p.patch} : it); return Promise.resolve({}); },
   },
 };
 function Shell(){
@@ -496,13 +498,13 @@ with sync_playwright() as pw:
     p.wait_for_timeout(300)
     op_after = p.evaluate("()=>getComputedStyle(document.querySelector('.composer-btn')).opacity")
     ok("写了字之后「记下」浮出来", float(op_after) > 0.9, op_after)
-    ok("注解行里是日期和预计耗时",
+    ok("注解行里是日期 / 时段 / 预计耗时",
        "今天" in p.locator(".composer-meta").inner_text()
+       and "时段" in p.locator(".composer-meta").inner_text()
        and "预计耗时" in p.locator(".composer-meta").inner_text(),
        p.locator(".composer-meta").inner_text().replace("\\n", " "))
-
-    p.locator(".composer-meta .ct-link").nth(1).click()
-    p.wait_for_timeout(300)
+    # 三个注解排成一行了，按文本点，别用索引（加一栏就点错）
+    p.locator(".composer-meta .ct-link", has_text="预计").click()
     ok("点「预计」弹出快捷档", p.locator(".ct-pop").count() == 1, p.locator(".ct-pop").count())
     ok("弹层里有 30 分钟这一档", p.locator(".ct-pop .dp-chip", has_text="30").count() == 1)
     p.locator(".ct-pop .dp-chip", has_text="30").first.click()
@@ -601,6 +603,22 @@ with sync_playwright() as pw:
     after_loads = " ".join(p.locator(".wc-load").all_inner_texts()).replace("\\n", " ")
     ok("分配后负荷跟着重算", "7.5 小时" in after_loads, after_loads)
 
+    # 拖动换时段：同一列里从「未安排」拖到「晚上」，日期不变、时段跟着变
+    # （之前只能拖到「某一天」，拖上去时段不变，看着像拖不动）
+    col3 = p.locator(".weekcol").nth(2)
+    chip3 = col3.locator(".wchip").first
+    grp = col3.locator(".wc-group").nth(2)          # 上午/下午/晚上 → 第 3 个是晚上
+    ok("日列里每个时段都是一块可放的地方", col3.locator(".wc-group").count() >= 3,
+       col3.locator(".wc-group").count())
+    p.evaluate("()=>{window.__calls.length=0;}")
+    gb = grp.bounding_box()
+    chip3.drag_to(grp, target_position={"x": 30, "y": max(6, gb["height"] - 4)})
+    p.wait_for_timeout(700)
+    moved = p.evaluate("()=>window.__calls.filter(c=>c[0]==='update').map(c=>c[1].patch)")
+    ok("拖到同一列的另一时段：日期和时段一起写",
+       len(moved) == 1 and moved[0].get("date") == "2026-10-21" and moved[0].get("slot") == "eve",
+       moved)
+
     # 在某天直接加一件事（＋ 按钮 → 小表单：标题 + 预计 + 开始）
     p.evaluate("()=>{window.__calls.length=0;}")
     p.locator(".weekcol").nth(0).locator(".wc-add").click()
@@ -618,12 +636,14 @@ with sync_playwright() as pw:
        created == [["周一新加的事", "2026-10-19", 45, "09:30"]], created)
     ok("加完表单收起", p.locator(".wkadd").count() == 0)
 
-    # 退回待分配：把周一的已完成那条退回 → carry 到今天
+    # 退回待分配：把周一那条从这天拿掉 → 日期清空（不是挪到今天）
     p.evaluate("()=>{window.__calls.length=0;}")
+    p.wait_for_timeout(400)
     p.locator(".weekcol").nth(0).locator(".wchip-x").first.click()
     p.wait_for_timeout(600)
-    back = p.evaluate("()=>window.__calls.filter(c=>c[0]==='carry').map(c=>c[1].date)")
-    ok("退回待分配 = 放回今天", back == ["2026-10-16"], back)
+    back = p.evaluate("()=>window.__calls.filter(c=>c[0]==='update').map(c=>c[1].patch.date)")
+    allcalls = p.evaluate("()=>JSON.stringify(window.__calls)")
+    ok("退回待分配 = 把日期清空，落到池子里", back == [""], "back=" + str(back) + " all=" + allcalls)
 
     # ---- 右键：在某天加事 ----
     p.evaluate("()=>{window.__calls.length=0;}")

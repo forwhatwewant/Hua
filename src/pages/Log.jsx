@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Editor from '../components/Editor.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { mdToHtml } from '../md.js';
@@ -13,6 +13,33 @@ function shiftDays(dateStr, n) {
   const d = fromStr(dateStr);
   d.setDate(d.getDate() + n);
   return dstr(d);
+}
+
+/** 这一天所在那一周的周一（和主进程 / 周程同一套：ISO 周，周一开头） */
+export function weekStartOf(dateStr) {
+  const d = fromStr(dateStr);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));   // getDay: 周日=0 → 换成「周一=0」
+  return dstr(d);
+}
+
+/**
+ * 侧栏的时间分组：最近两周按周（本周 / 上周），更早的按月。
+ *
+ * 为什么不再细到「每一周一组」：侧栏只列**有内容的日子**（有事项或有心得），
+ * 90 天里通常只有十几二十条 —— 组标题比内容还多反而更乱。
+ * 两周之内是最常翻的（「上周三写了啥」），再往前用「月」当锚点够用。
+ */
+export function groupOf(dateStr, today) {
+  const ws = weekStartOf(dateStr);
+  const thisWeek = weekStartOf(today);
+  if (ws === thisWeek) return { key: 'w0', label: '本周' };
+  if (ws === shiftDays(thisWeek, -7)) return { key: 'w1', label: '上周' };
+  const d = fromStr(dateStr);
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  // 跨年了就把年份带上，否则「10 月」会分不清是哪一年的
+  const label = y === fromStr(today).getFullYear() ? `${m} 月` : `${y} 年 ${m} 月`;
+  return { key: `m${y}-${pad2(m)}`, label };
 }
 
 /* 「今天是哪天」一律用主进程下发的 boot.today —— 那边按日界算（默认凌晨 4 点前算前一天）。
@@ -276,6 +303,23 @@ export default function Log({ boot, reload, jump, onJumpDone }) {
 
   const writtenCount = days.filter((d) => d.written).length;
 
+  /* 侧栏按时间分组：本周 / 上周 / 更早的按月。
+     列表本身是从新到旧排的，所以组的先后天然正确，不用再排一次。 */
+  const dayGroups = useMemo(() => {
+    const out = [];
+    let cur = null;
+    for (const d of days) {
+      const g = groupOf(d.date, today);
+      if (!cur || cur.key !== g.key) {
+        cur = { key: g.key, label: g.label, days: [], written: 0 };
+        out.push(cur);
+      }
+      cur.days.push(d);
+      if (d.written) cur.written += 1;
+    }
+    return out;
+  }, [days, today]);
+
   /* ---------- 日历 ---------- */
   const calCells = useMemo(() => {
     const [y, m] = calMonth.split('-').map(Number);
@@ -515,24 +559,34 @@ export default function Log({ boot, reload, jump, onJumpDone }) {
               {days.length === 0 && (
                 <div className="empty" style={{ padding: '8px 0', fontSize: 12.5 }}>这段时间没有记录。</div>
               )}
-              {days.map((d) => (
-                <button
-                  key={d.date}
-                  className={`logday${d.date === date ? ' on' : ''}${d.pinned ? ' pinned' : ''}`}
-                  onClick={() => pick(d.date)}
-                  title={d.title || d.date}
-                >
-                  <span className="logday-top">
-                    <span className="logday-rel">{shortLabel(d.date, today)}</span>
-                    <span className="grow" />
-                    {d.pinned && <span className="logday-pin" title="已固定到今日页">固定</span>}
-                    <span className={`logday-mark${d.written ? ' on' : ''}`} title={d.written ? '写过' : '还没写'}>·</span>
-                  </span>
-                  {/* 过往日纪的标题 —— 光看日期想不起来那天写了什么 */}
-                  <span className={`logday-title${d.title ? '' : ' muted'}`}>
-                    {d.title || (d.written ? '（无标题）' : '还没写')}
-                  </span>
-                </button>
+              {/* 按时间分组：本周 / 上周 / 10 月 ……
+                  一条细线 + 一个小字，给一长串日期一个可以落脚的锚点。 */}
+              {dayGroups.map((g) => (
+                <Fragment key={g.key}>
+                  <div className="loggroup">
+                    <span className="loggroup-label">{g.label}</span>
+                    {g.written > 0 && <span className="loggroup-n">{g.written} 篇</span>}
+                  </div>
+                  {g.days.map((d) => (
+                    <button
+                      key={d.date}
+                      className={`logday${d.date === date ? ' on' : ''}${d.pinned ? ' pinned' : ''}`}
+                      onClick={() => pick(d.date)}
+                      title={d.title || d.date}
+                    >
+                      <span className="logday-top">
+                        <span className="logday-rel">{shortLabel(d.date, today)}</span>
+                        <span className="grow" />
+                        {d.pinned && <span className="logday-pin" title="已固定到今日页">固定</span>}
+                        <span className={`logday-mark${d.written ? ' on' : ''}`} title={d.written ? '写过' : '还没写'}>·</span>
+                      </span>
+                      {/* 过往日纪的标题 —— 光看日期想不起来那天写了什么 */}
+                      <span className={`logday-title${d.title ? '' : ' muted'}`}>
+                        {d.title || (d.written ? '（无标题）' : '还没写')}
+                      </span>
+                    </button>
+                  ))}
+                </Fragment>
               ))}
             </aside>
 

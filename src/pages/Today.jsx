@@ -4,7 +4,7 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import DoneList from '../components/DoneList.jsx';
 import EditItemModal from '../components/EditItemModal.jsx';
 import { shift } from '../dates.js';
-import { groupBySlot, slotOf } from '../slot.js';
+import { SLOTS, groupBySlot, slotOf } from '../slot.js';
 import { nightLabel } from '../dates.js';
 import { rateText } from '../rate.js';
 
@@ -109,6 +109,9 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
   const [addDate, setAddDate] = useState('');      // '' = 今天；POOL = 待分配；否则是 YYYY-MM-DD
   const [datePick, setDatePick] = useState(false);
   const [estPick, setEstPick] = useState(false);   // 预计耗时的快捷选择
+  // 时段：记的时候就能说是上午还是晚上。留空 = 未安排（列表里排在最后那一档）。
+  const [slot, setSlot] = useState('');
+  const [slotPick, setSlotPick] = useState(false);
   // 「不定时」：现在不估，做完在完成弹窗里填实际耗时。数据上就是 estMinutes = null，
   // 单独记一个状态只是为了在录入框上显示出来（空着 vs 明确选过，看起来不一样）。
   const [untimed, setUntimed] = useState(false);
@@ -124,6 +127,11 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
   /* 正在就地改的那条备忘（点文字改）。null = 没有。 */
   const [memoEdit, setMemoEdit] = useState(null);   // { id, text, time, note }
   const memos = boot.memos || [];
+  /* 备忘的拖拽排序：一维列表，比事项简单 —— 不用管时段，只管落位。
+     顺序落在 memos.sort_key 上（db.reorderMemos），刷新后保持。 */
+  const [memoDragId, setMemoDragId] = useState(null);
+  const [memoOver, setMemoOver] = useState(null);   // { id, after }
+  const memoJustDragged = useRef(false);            // 刚拖完就别把那次 mouseup 当点击
   /* 固定区块里就地展开的那几条（日志用 date 做键，事项用 id）。
      固定区常常是「想起来才看一眼」，就地展开不用跳页、不丢上下文。 */
   const [expanded, setExpanded] = useState(() => new Set());
@@ -140,10 +148,10 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
   const unscheduled = boot.unscheduled || [];
 
   /* 上午 / 下午 / 晚上：按时段分组，组之间插一条很轻的隔断。
-     一个时段都没指定的时候不画隔断（否则整页凭空多出三条线）。 */
+     三档**一直画**（空档只留一行小字，不画线）—— 之前「一条都没指定就整块不画」，
+     结果是用户看到的就是「日程没有早中晚」。骨架要稳定。 */
   const grouped = groupBySlot(visible);
   const ordered = grouped.flatMap((g) => g.items);
-  const hasSlots = visible.some((it) => slotOf(it) !== '');
 
   // 录入目标日期：默认今天，可在输入框上切到明天/后天/具体某天
   // '' 已经被「今天」占用（addDate 为空就是今天），所以「待分配」单独用一个哨兵
@@ -194,11 +202,13 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
     await window.hua.items.create({
       date: targetDate,
       title: t,
-      estMinutes: est ? Number(est) : null
+      estMinutes: est ? Number(est) : null,
+      slot: slot || null
     });
     setTitle('');
     setEst('');
     setUntimed(false);
+    setSlot('');
     // 排到未来 / 待分配的事项不会出现在今天的列表里，给一句即时回执，免得以为没记上
     if (!targetDate) flash('已放进待分配');
     else if (targetDate !== boot.today) flash(`已排到${relLabel(boot.today, targetDate)}`);
@@ -361,6 +371,42 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
     reload();
   };
 
+  /* 备忘拖拽：把拖动的那条插到目标的前/后，其余保持原顺序 */
+  const onMemoDragStart = (e, id) => {
+    e.dataTransfer.effectAllowed = 'move';
+    setMemoDragId(id);
+  };
+  const onMemoDragOver = (e, m) => {
+    if (!memoDragId || m.id === memoDragId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const r = e.currentTarget.getBoundingClientRect();
+    setMemoOver({ id: m.id, after: e.clientY > r.top + r.height / 2 });
+  };
+  const onMemoDrop = async (e, m) => {
+    e.preventDefault();
+    const src = memoDragId;
+    const insertAfter = memoOver?.after;
+    setMemoDragId(null);
+    setMemoOver(null);
+    if (!src || src === m.id) return;
+
+    const ids = memos.map((x) => x.id).filter((id) => id !== src);
+    const i = ids.indexOf(m.id);
+    if (i < 0) return;
+    ids.splice(insertAfter ? i + 1 : i, 0, src);
+
+    await window.hua.memos.reorder({ ids });
+    reload();
+  };
+  const onMemoDragEnd = () => {
+    setMemoDragId(null);
+    setMemoOver(null);
+    // 拖完浏览器常会补一个 click，别让它顺手把那条打开成编辑态
+    memoJustDragged.current = true;
+    setTimeout(() => { memoJustDragged.current = false; }, 200);
+  };
+
   const snapshotNow = async () => {
     const r = await window.hua.journal.snapshot({ date: boot.today, force: true });
     reload();   // 让 boot.snapshotWritten 跟上，否则「完成清单明天入档」提示一直不更新
@@ -401,7 +447,7 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
             <span className="ct-wrap">
               <button
                 className={`ct-link${targetDate !== boot.today ? ' on' : ''}`}
-                onClick={() => { setEstPick(false); setDatePick((v) => !v); }}
+                onClick={() => { setEstPick(false); setSlotPick(false); setDatePick((v) => !v); }}
                 title="记到哪一天"
               >
                 {addDate === POOL ? '待分配' : relLabel(boot.today, targetDate)}<i className="ct-caret">▾</i>
@@ -435,11 +481,44 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
 
             <span className="ct-dot">·</span>
 
+            {/* 时段：记的时候就说是上午还是晚上。留空 = 未安排（列表里排最后一档） */}
+            <span className="ct-wrap">
+              <button
+                className={`ct-link${slot ? ' on' : ''}`}
+                onClick={() => { setDatePick(false); setEstPick(false); setSlotPick((v) => !v); }}
+                title="这件事放在上午、下午还是晚上"
+              >
+                {slot ? (SLOTS.find((s) => s.key === slot)?.label ?? '时段') : '时段'}<i className="ct-caret">▾</i>
+              </button>
+              {slotPick && (
+                <div className="ct-pop">
+                  {SLOTS.map((s) => (
+                    <button
+                      key={s.key}
+                      className={`dp-chip${slot === s.key ? ' on' : ''}`}
+                      onClick={() => { setSlot(s.key); setSlotPick(false); }}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                  <button
+                    className={`dp-chip${slot === '' ? ' on' : ''}`}
+                    onClick={() => { setSlot(''); setSlotPick(false); }}
+                    title="先不排进某一段，放在「未安排」里"
+                  >
+                    不指定
+                  </button>
+                </div>
+              )}
+            </span>
+
+            <span className="ct-dot">·</span>
+
             {/* 预计耗时：给几个常用档点，不用手打数字 */}
             <span className="ct-wrap">
               <button
                 className={`ct-link${est || untimed ? ' on' : ''}`}
-                onClick={() => { setDatePick(false); setEstPick((v) => !v); }}
+                onClick={() => { setDatePick(false); setSlotPick(false); setEstPick((v) => !v); }}
                 title="预计要花多久；选「不定时」就等做完再填实际耗时"
               >
                 {est ? `预计 ${est} 分钟` : (untimed ? '不定时' : '预计耗时')}<i className="ct-caret">▾</i>
@@ -505,79 +584,6 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
 
             <div className="pane-body pane-left">
               <div className="pane-scroll">
-              {/* 遗留：默认收起，只留一个入口（ADR-0008：不顺延，手动拉）。
-                  打开应用的第一眼应该是「今天」，而不是被前几天没做完的事占满。 */}
-              {boot.backlog.length > 0 && (
-                <div className="backsect">
-                  <button className="backsect-head" onClick={() => setShowBacklog((v) => !v)}>
-                    <span>前几天遗留</span>
-                    <span className="back-count">{boot.backlog.length}</span>
-                    <span className="grow" />
-                    <span className="chev">{showBacklog ? '收起' : '展开'}</span>
-                  </button>
-                  {showBacklog && (
-                    <>
-                      <div className="items">
-                        {boot.backlog.map((it) => (
-                          <div className={`item back${backSel.includes(it.id) ? ' sel' : ''}`} key={it.id}>
-                            <input
-                              type="checkbox"
-                              className="back-check"
-                              checked={backSel.includes(it.id)}
-                              onChange={() => toggleBack(it.id)}
-                              title="选中，之后可以一起处理"
-                            />
-                            <div>
-                              <div className="it-title">{it.title}</div>
-                              <div className="it-meta"><span>{it.date}</span></div>
-                            </div>
-                            <div className="it-actions" style={{ opacity: 1 }}>
-                              <button onClick={() => carryOne(it)}>移到今天</button>
-                              <button onClick={() => setCompleting(it)}>完成</button>
-                              <button className="del" onClick={() => setConfirming(it)}>删除</button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="backsect-foot backfoot">
-                        <label className="back-all">
-                          <input type="checkbox" checked={backAll} onChange={toggleBackAll} />
-                          全选
-                        </label>
-                        {backSel.length > 0 ? (
-                          <>
-                            <span className="back-selnum">已选 {backSel.length} 件</span>
-                            <button className="btn" style={{ padding: '4px 10px', fontSize: 12 }} onClick={bulkCarry}>
-                              移到今天
-                            </button>
-                            <button
-                              className="btn"
-                              style={{ padding: '4px 10px', fontSize: 12 }}
-                              onClick={() => { setBulkDoneDate(boot.today); setBulkDoneOpen(true); }}
-                            >
-                              完成
-                            </button>
-                            <button
-                              className="btn danger"
-                              style={{ padding: '4px 10px', fontSize: 12 }}
-                              onClick={() => setBulkConfirm(true)}
-                            >
-                              删除
-                            </button>
-                            <button className="btn" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setBackSel([])}>
-                              取消选择
-                            </button>
-                          </>
-                        ) : (
-                          <button className="btn" style={{ padding: '4px 10px', fontSize: 12 }} onClick={carryAll}>
-                            全部移到今天
-                          </button>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
 
               {/* 未来：同样是常驻区块，但默认收起 —— 今天才是主角，这里只做预告。
                   标题里带分布摘要，不展开也能一眼看到「明天有几件」。 */}
@@ -615,6 +621,9 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
                                 </div>
                                 <div className="it-actions" style={{ opacity: 1 }}>
                                   <button onClick={() => bringToToday(it)}>移到今天</button>
+                                  {/* 未来事项也要能直接退回待分配 —— 之前只有「改期」，
+                                      想改成「先不定哪天」得点开弹框，还撞上过清空日期不生效的 bug */}
+                                  <button onClick={() => unassign(it)} title="先不定哪天做，放进待分配">待分配</button>
                                   <button onClick={() => setEditing(it)}>改期</button>
                                   <button className="del" onClick={() => setConfirming(it)}>删除</button>
                                 </div>
@@ -633,15 +642,17 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
 
               <div className="items">
                 {grouped.map((g) => {
-                  if (!g.items.length) return null;
+                  const isNone = !g.key;
+                  // 上午 / 下午 / 晚上**永远画** —— 日程的骨架不能因为「一条都没指定」就消失，
+                  // 那样看起来就是「根本没有早中晚」（用户报过）。
+                  // 「未安排」不是一天里的某一段，只是兜底，空了就不画。
+                  if (isNone && !g.items.length) return null;
                   return (
                     <Fragment key={g.key || 'none'}>
-                      {/* 小小的隔断：一条淡线 + 一个时段名 */}
-                      {hasSlots && (
-                        <div className={`it-slot${g.key ? '' : ' none'}`}>
-                          <span>{g.label}</span>
-                        </div>
-                      )}
+                      {/* 小小的隔断：一条淡线 + 一个时段名。空档不画线，只留一行小字 */}
+                      <div className={`it-slot${isNone ? ' none' : ''}${g.items.length ? '' : ' empty'}`}>
+                        <span>{g.label}</span>
+                      </div>
                       {g.items.map((it) => {
                   const cls = `item ${it.status}` +
                     (it.pinned ? ' pinned' : '') +
@@ -733,6 +744,83 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
                   ))}
                 </div>
               )}
+
+              {/* 前几天没做完的：放在最下面，一条很轻的行。默认收起，**收起时不报件数**
+                  —— 那个数字每天累加会变成压力源，它不是账本，只是「要不要捡回来」的提醒
+                  （ADR-0008：不顺延，手动拉）。固定的不在这里：固定的不欠任何一天。 */}
+              {boot.backlog.length > 0 && (
+                <div className={`backsect quiet${showBacklog ? ' open' : ''}`}>
+                  <button className="backsect-head" onClick={() => setShowBacklog((v) => !v)}>
+                    <span className="back-caret">{showBacklog ? '▾' : '▸'}</span>
+                    <span>前几天没做完的</span>
+                    {/* 收起时不报件数 —— 那个数字每天累加，看着像欠债 */}
+                    {showBacklog && <span className="back-count">{boot.backlog.length}</span>}
+                    <span className="grow" />
+                    <span className="chev">{showBacklog ? '收起' : ''}</span>
+                  </button>
+                  {showBacklog && (
+                    <>
+                      <div className="items">
+                        {boot.backlog.map((it) => (
+                          <div className={`item back${backSel.includes(it.id) ? ' sel' : ''}`} key={it.id}>
+                            <input
+                              type="checkbox"
+                              className="back-check"
+                              checked={backSel.includes(it.id)}
+                              onChange={() => toggleBack(it.id)}
+                              title="选中，之后可以一起处理"
+                            />
+                            <div>
+                              <div className="it-title">{it.title}</div>
+                              <div className="it-meta"><span>{it.date}</span></div>
+                            </div>
+                            <div className="it-actions" style={{ opacity: 1 }}>
+                              <button onClick={() => carryOne(it)}>移到今天</button>
+                              <button onClick={() => setCompleting(it)}>完成</button>
+                              <button className="del" onClick={() => setConfirming(it)}>删除</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="backsect-foot backfoot">
+                        <label className="back-all">
+                          <input type="checkbox" checked={backAll} onChange={toggleBackAll} />
+                          全选
+                        </label>
+                        {backSel.length > 0 ? (
+                          <>
+                            <span className="back-selnum">已选 {backSel.length} 件</span>
+                            <button className="btn" style={{ padding: '4px 10px', fontSize: 12 }} onClick={bulkCarry}>
+                              移到今天
+                            </button>
+                            <button
+                              className="btn"
+                              style={{ padding: '4px 10px', fontSize: 12 }}
+                              onClick={() => { setBulkDoneDate(boot.today); setBulkDoneOpen(true); }}
+                            >
+                              完成
+                            </button>
+                            <button
+                              className="btn danger"
+                              style={{ padding: '4px 10px', fontSize: 12 }}
+                              onClick={() => setBulkConfirm(true)}
+                            >
+                              删除
+                            </button>
+                            <button className="btn" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setBackSel([])}>
+                              取消选择
+                            </button>
+                          </>
+                        ) : (
+                          <button className="btn" style={{ padding: '4px 10px', fontSize: 12 }} onClick={carryAll}>
+                            全部移到今天
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
               </div>{/* pane-scroll */}
             </div>
           </section>
@@ -753,7 +841,10 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
                 <div className="rec-head">
                   <h3>备忘{memos.length ? ` · ${memos.length}` : ''}</h3>
                   <span className="grow" />
-                  <span className="memo-hint">不绑日期，一直在</span>
+                  {/* 一条以上才提「可拖动」——一条的时候提它没意义 */}
+                  <span className="memo-hint">
+                    {memos.length > 1 ? '不绑日期 · 按住可拖动排序' : '不绑日期，一直在'}
+                  </span>
                 </div>
 
                 {memos.length > 0 && (
@@ -798,12 +889,29 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
                           <button className="refpinbtn" onClick={() => setMemoEdit(null)}>取消</button>
                         </div>
                       ) : (
-                        <div className="memorow" key={m.id}>
+                        <div
+                          className={
+                            'memorow' +
+                            (memoDragId === m.id ? ' dragging' : '') +
+                            (memoOver?.id === m.id
+                              ? (memoOver.after ? ' dragover-after' : ' dragover-before')
+                              : '')
+                          }
+                          key={m.id}
+                          draggable
+                          onDragStart={(e) => onMemoDragStart(e, m.id)}
+                          onDragOver={(e) => onMemoDragOver(e, m)}
+                          onDragEnd={onMemoDragEnd}
+                          onDrop={(e) => onMemoDrop(e, m)}
+                        >
                           <MemoMark />
                           <div
                             className="memo-main"
-                            title="点一下改"
-                            onClick={() => setMemoEdit({ id: m.id, text: m.text, time: m.time, note: m.note || '' })}
+                            title="点一下改；按住可以拖动排序"
+                            onClick={() => {
+                              if (memoJustDragged.current) return;   // 刚拖完，别当成点击
+                              setMemoEdit({ id: m.id, text: m.text, time: m.time, note: m.note || '' });
+                            }}
                           >
                             <div className="memo-line">
                               <span className="memo-text">{m.text}</span>
@@ -811,7 +919,14 @@ export default function Today({ boot, reload, onOpenLogAt, onOpenSleep }) {
                             </div>
                             {m.note && <div className="memo-note">{m.note}</div>}
                           </div>
-                          <button className="refpinbtn" title="删除这条备忘" onClick={() => removeMemo(m)}>删除</button>
+                          <button
+                            className="refpinbtn"
+                            draggable={false}
+                            title="删除这条备忘"
+                            onClick={() => removeMemo(m)}
+                          >
+                            删除
+                          </button>
                         </div>
                       )
                     ))}

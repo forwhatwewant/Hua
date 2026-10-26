@@ -275,8 +275,12 @@ function pinnedReflections() {
 }
 
 function backlog(beforeDate) {
+  // 固定的不算「前几天没做完」：固定的意思是「一直挂在那儿」，它不欠任何一天。
+  // 把它算进遗留，等于把一条提醒变成一笔债（用户报过「固定的都被排到前几天未完成」）。
   return all(
-    `SELECT ${ITEM_COLS} FROM items WHERE status = 'todo' AND date < ? ORDER BY date DESC, sort_key`,
+    `SELECT ${ITEM_COLS} FROM items
+      WHERE status = 'todo' AND date < ? AND pinned = 0
+      ORDER BY date DESC, sort_key`,
     [beforeDate]
   ).map(rowToItem);
 }

@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import CompleteModal from '../components/CompleteModal.jsx';
 import EditItemModal from '../components/EditItemModal.jsx';
 import { rateText } from '../rate.js';
@@ -32,6 +32,9 @@ export default function Week({ boot, reload }) {
   const [loading, setLoading] = useState(true);
   const [dragId, setDragId] = useState(null);
   const [overDate, setOverDate] = useState(null);
+  /* 拖动时鼠标停在哪一档：{ date, slot }。比 overDate 细一层 ——
+     同一个日列里也分上午/下午/晚上，落点要看是哪一段。 */
+  const [slotOver, setSlotOver] = useState(null);
   /* 点选式分配：拖拽之外的另一条路。先点池子里的一条，再点某一天。 */
   const [picked, setPicked] = useState(null);
   const [completing, setCompleting] = useState(null);
@@ -121,13 +124,31 @@ export default function Week({ boot, reload }) {
     setPicked(null);
     setDragId(null);
     setOverDate(null);
+    setSlotOver(null);
     await refresh();
   };
 
-  /* 退回待分配：把日期放回今天，它就会重新出现在池子里。
-     不用「删除」—— 那太狠了；这里只是「这周先不排」。 */
+  /* 拖到「某一天的某个时段」：日期和时段一起写。
+     之前只能拖到「某一天」（weekcol 的 onDrop），同一列里换个时段没法表达 ——
+     拖上去日期变了、时段没变，看着就像「拖不动」（用户报过）。
+     slot 用 '' 表示「未安排」，也允许拖进去。 */
+  const dropToSlot = async (e, date, slot) => {
+    e.preventDefault();
+    e.stopPropagation();          // 别让 weekcol 的 onDrop 再跑一遍
+    const id = dragId;
+    setDragId(null);
+    setOverDate(null);
+    setSlotOver(null);
+    if (!id) return;
+    await window.hua.items.update({ id, patch: { date, slot } });
+    await refresh();
+  };
+
+  /* 「从这天拿掉」= 退回待分配（date = ''，不属于任何一天），落到池子的「待分配」里。
+     之前这里写的是 carry({ date: today })，和按钮提示「退回待分配」不符 ——
+     用户从周程里点掉明天那条，结果它跑到今天，看着像没生效。 */
   const unschedule = async (it) => {
-    await window.hua.items.carry({ ids: [it.id], date: board.today });
+    await window.hua.items.update({ id: it.id, patch: { date: '' } });
     await refresh();
   };
 
@@ -284,12 +305,29 @@ export default function Week({ boot, reload }) {
                   </div>
 
                   <div className="wc-list">
-                    {/* 上午 / 下午 / 晚上：列很窄，隔断只留一个很小的时段名 + 一条淡线 */}
-                    {groupBySlot(items).map((g) => g.items.length === 0 ? null : (
-                      <Fragment key={g.key || 'none'}>
-                        {items.some((x) => slotOf(x) !== '') && (
-                          <div className={`wc-slot${g.key ? '' : ' none'}`}>{g.label}</div>
-                        )}
+                    {/* 上午 / 下午 / 晚上：列很窄，隔断只留一个很小的时段名 + 一条淡线。
+                        三档一直画（空档更淡），这样七列的分段是同一个骨架，
+                        一眼就能看出「哪天上午还空着」。 */}
+                    {groupBySlot(items).map((g) => {
+                      const isNone = !g.key;
+                      if (isNone && g.items.length === 0) return null;
+                      const isOver = slotOver && slotOver.date === d && slotOver.slot === g.key;
+                      return (
+                      <div
+                        key={g.key || 'none'}
+                        className={`wc-group${isNone ? ' none' : ''}${isOver ? ' over' : ''}`}
+                        onDragOver={(e) => {
+                          if (!dragId) return;
+                          e.preventDefault();
+                          e.stopPropagation();     // 列级只管「换天」，这一层管「换时段」
+                          e.dataTransfer.dropEffect = 'move';
+                          if (!isOver) setSlotOver({ date: d, slot: g.key });
+                        }}
+                        onDrop={(e) => dropToSlot(e, d, g.key)}
+                      >
+                        <div className={`wc-slot${isNone ? ' none' : ''}${g.items.length ? '' : ' empty'}`}>
+                          {g.label}
+                        </div>
                         {g.items.map((it) => (
                       <div
                         key={it.id}
@@ -316,15 +354,16 @@ export default function Week({ boot, reload }) {
                         <button
                           className="wchip-x"
                           draggable={false}
-                          title="退回待分配（放回今天）"
+                          title="退回待分配（不属任何一天，落到下面的池子里）"
                           onClick={(e) => { e.stopPropagation(); unschedule(it); }}
                         >
                           ×
                         </button>
                       </div>
                         ))}
-                      </Fragment>
-                    ))}
+                      </div>
+                      );
+                    })}
                   </div>
 
                   <button
